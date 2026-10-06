@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this atlas or its data, please cite it."
+title: "Interaction Atlas of Amines with Lignocellulose Monomers"
+version: "1.0"
+authors:
+  - family-names: Adesanya
+    given-names: Taiwo Zacchaeus
+    affiliation: "University of Illinois Chicago"
+license: CC-BY-4.0

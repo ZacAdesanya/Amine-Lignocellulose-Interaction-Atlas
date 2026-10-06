@@ -1,0 +1,569 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>try{var __t=location.hash.replace('#','');if(__t==='dark'||__t==='light')document.documentElement.setAttribute('data-theme',__t)}catch(e){}</script>
+<title>Proton Transfer Explorer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.5.5/3Dmol-min.js"></script>
+<style>
+/* Layout: fixed header (reaction picker + barrier strip) above a two-pane
+   body — 3D viewer left, energy-profile + playback right; panes stack to
+   one column under 720px. Single dark "instrument readout" theme by choice. */
+:root{
+  --bg:#0b121c;
+  --panel:#121b28;
+  --panel2:#0f1723;
+  --line:#243247;
+  --fg:#e8eef7;
+  --fg-dim:#8ea0b8;
+  --fg-faint:#5a6b84;
+  --accent:#f2a950;
+  --accent-dim:#7a5a2e;
+  --teal:#5fd4c4;
+  --teal-dim:#2b5852;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --sans: 'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--sans);
+  padding-inline:16px;
+  padding-block:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:100dvh;
+}
+h1{
+  font-size:1.05rem;
+  font-weight:600;
+  letter-spacing:.01em;
+  margin:0;
+}
+.sub{
+  font-family:var(--mono);
+  font-size:.72rem;
+  color:var(--fg-dim);
+  letter-spacing:.02em;
+}
+header{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.headrow{
+  display:flex;
+  gap:14px;
+  align-items:baseline;
+  flex-wrap:wrap;
+  justify-content:space-between;
+}
+select#pick{
+  background:var(--panel);
+  color:var(--fg);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:8px 10px;
+  font-family:var(--mono);
+  font-size:.78rem;
+  min-width:280px;
+  max-width:100%;
+}
+.barstrip{
+  display:flex;
+  gap:2px;
+  align-items:flex-end;
+  height:34px;
+  overflow-x:auto;
+  padding:2px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--panel2);
+}
+.barstrip .bwrap{
+  flex:0 0 auto;
+  width:14px;
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  cursor:pointer;
+  position:relative;
+}
+.barstrip .b{
+  width:100%;
+  background:var(--teal-dim);
+  border-radius:2px 2px 0 0;
+  transition:background .15s;
+}
+.barstrip .bwrap.active .b{background:var(--accent)}
+.barstrip .bwrap:hover .b{background:var(--accent)}
+main{
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+  gap:12px;
+  flex:1;
+  min-height:0;
+}
+@media (max-width:720px){
+  main{grid-template-columns:1fr}
+}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+}
+.panel h2{
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--fg-dim);
+  margin:0 0 8px 0;
+  font-weight:600;
+}
+#viewer{
+  flex:1;
+  min-height:320px;
+  border-radius:8px;
+  background:var(--panel2);
+  position:relative;
+  overflow:hidden;
+}
+.legend{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  font-family:var(--mono);
+  font-size:.66rem;
+  color:var(--fg-dim);
+  margin-top:8px;
+}
+.legend span{display:flex;align-items:center;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.chartwrap{flex:1;min-height:220px;display:flex;flex-direction:column}
+svg#chart{width:100%;flex:1;min-height:180px}
+.controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+}
+button.playbtn{
+  background:var(--accent);
+  color:#241505;
+  border:none;
+  border-radius:50%;
+  width:34px;height:34px;
+  font-size:.9rem;
+  cursor:pointer;
+  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+}
+button.playbtn:active{transform:scale(.94)}
+input#slider{
+  flex:1;
+  accent-color:var(--accent);
+}
+.readout{
+  font-family:var(--mono);
+  font-size:.72rem;
+  color:var(--fg-dim);
+  min-width:150px;
+  text-align:right;
+}
+.readout b{color:var(--accent);font-weight:600}
+.stats{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:10px;
+  font-family:var(--mono);
+  font-size:.72rem;
+}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat .v{font-size:1rem;color:var(--fg);font-weight:600}
+.stat .k{color:var(--fg-faint);text-transform:uppercase;letter-spacing:.06em;font-size:.62rem}
+footer{
+  font-family:var(--mono);
+  font-size:.64rem;
+  color:var(--fg-faint);
+  text-align:center;
+  padding-top:4px;
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<header>
+  <div class="headrow">
+    <div>
+      <h1>Proton transfer paths</h1>
+      <div class="sub">xTB NEB-TS MEP trajectories · lignin monomers &amp; amines</div>
+    </div>
+    <select id="pick" aria-label="Choose reaction"></select>
+  </div>
+  <div class="barstrip" id="barstrip" title="Barrier height across all 20 reactions — click to jump"></div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Reaction coordinate — 3D structure</h2>
+    <div id="viewer"></div>
+    <div class="legend">
+      <span><i class="dot" style="background:#909090"></i>C</span>
+      <span><i class="dot" style="background:#e0e0e0"></i>H</span>
+      <span><i class="dot" style="background:#e0524a"></i>O</span>
+      <span><i class="dot" style="background:#5c7fe0"></i>N</span>
+      <span style="margin-left:auto">drag to rotate · scroll to zoom</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Energy profile</h2>
+    <div class="chartwrap">
+      <svg id="chart" viewBox="0 0 560 220" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="controls">
+      <button class="playbtn" id="play" aria-label="Play">▶</button>
+      <input type="range" id="slider" min="0" max="9" step="1" value="0">
+      <div class="readout" id="readout">frame 1 / 10 · <b>0.00</b> kcal/mol</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="statBarrier">–</div><div class="k">Rel. energy at final frame</div></div>
+      <div class="stat"><div class="v" id="statAtoms">–</div><div class="k">Atoms</div></div>
+      <div class="stat"><div class="v" id="statFrames">–</div><div class="k">Frames</div></div>
+      <div class="stat"><div class="v" id="statSource">–</div><div class="k">Proton source</div></div>
+    </div>
+  </section>
+</main>
+
+<footer>Energies are ORCA/xTB single points along the NEB-TS minimum-energy path, relative to the first (neutral) frame · frame 0 = neutral H-bonded complex, last frame = proton-transferred ion pair</footer>
+
+<script>
+(function(){
+  function cvar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888'}
+  var state = { jobs: [], current: null, frame: 0, playing: false, timer: null };
+
+  function el(tag, props){
+    var e = document.createElement(tag);
+    if(props) Object.keys(props).forEach(function(k){ e[k] = props[k]; });
+    return e;
+  }
+
+  function buildXYZ(frameAtoms){
+    var lines = [String(frameAtoms.length), 'frame'];
+    frameAtoms.forEach(function(a){
+      lines.push(a[0] + ' ' + a[1] + ' ' + a[2] + ' ' + a[3]);
+    });
+    return lines.join('\n');
+  }
+
+  function fmtLabel(job){
+    return job.rid + ' · ' + job.monomer + ' + ' + job.amine + ' (' + job.hsource + ')';
+  }
+
+  function groupByMonomer(jobs){
+    var groups = {};
+    var order = [];
+    jobs.forEach(function(j){
+      if(!groups[j.monomer]){ groups[j.monomer] = []; order.push(j.monomer); }
+      groups[j.monomer].push(j);
+    });
+    return { groups: groups, order: order };
+  }
+
+  function populatePicker(jobs){
+    var picker = document.getElementById('pick');
+    var g = groupByMonomer(jobs);
+    g.order.forEach(function(mon){
+      var og = el('optgroup', {label: mon});
+      g.groups[mon].forEach(function(j){
+        var opt = el('option', {value: j.rid, textContent: j.rid + ' · ' + j.amine + ' (' + j.hsource + ')'});
+        og.appendChild(opt);
+      });
+      picker.appendChild(og);
+    });
+    picker.addEventListener('change', function(){
+      selectJob(picker.value);
+    });
+  }
+
+  function populateBarstrip(jobs){
+    var strip = document.getElementById('barstrip');
+    var maxB = Math.max.apply(null, jobs.map(function(j){return Math.abs(j.dE);}));
+    jobs.forEach(function(j){
+      var wrap = el('div', {className:'bwrap'});
+      wrap.dataset.rid = j.rid;
+      var h = Math.max(4, Math.round(28 * Math.abs(j.dE) / maxB));
+      var bar = el('div', {className:'b'});
+      bar.style.height = h + 'px';
+      wrap.appendChild(bar);
+      wrap.title = j.rid + ' ' + j.monomer + '+' + j.amine + ' (' + j.hsource + ') — ' + j.dE + ' kcal/mol';
+      wrap.addEventListener('click', function(){ selectJob(j.rid); });
+      strip.appendChild(wrap);
+    });
+  }
+
+  function markActiveBar(rid){
+    document.querySelectorAll('.barstrip .bwrap').forEach(function(w){
+      w.classList.toggle('active', w.dataset.rid === rid);
+    });
+  }
+
+  var viewer = null;
+  function ensureViewer(){
+    if(viewer) return viewer;
+    viewer = $3Dmol.createViewer(document.getElementById('viewer'), {backgroundColor:cvar('--panel2')});
+    return viewer;
+  }
+
+  function renderModel(job, frameIdx, resetCamera){
+    var v = ensureViewer();
+    v.removeAllModels();
+    var xyz = buildXYZ(job.frames[frameIdx]);
+    var model = v.addModel(xyz, 'xyz');
+    v.setStyle({}, {stick:{radius:0.14}, sphere:{scale:0.28}});
+    if(resetCamera){ v.zoomTo(); }
+    v.render();
+  }
+
+  function energyExtent(job){
+    var lo = Math.min.apply(null, job.rel_energies);
+    var hi = Math.max.apply(null, job.rel_energies);
+    if(lo === hi){ lo -= 1; hi += 1; }
+    var pad = (hi - lo) * 0.12;
+    return [lo - pad, hi + pad];
+  }
+
+  var CW = 560, CH = 220, MX = 44, MY_T = 14, MY_B = 34;
+  function px(i, n){ return MX + (CW - MX - 14) * (i / (n - 1)); }
+  function py(e, lo, hi){ return MY_T + (CH - MY_T - MY_B) * (1 - (e - lo) / (hi - lo)); }
+
+  function drawChart(job, frameIdx){
+    var svg = document.getElementById('chart');
+    svg.innerHTML = '';
+    var ns = 'http://www.w3.org/2000/svg';
+    var n = job.rel_energies.length;
+    var ext = energyExtent(job);
+    var lo = ext[0], hi = ext[1];
+
+    function line(x1,y1,x2,y2,cls){
+      var l = document.createElementNS(ns,'line');
+      l.setAttribute('x1',x1); l.setAttribute('y1',y1);
+      l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+      l.setAttribute('class',cls);
+      return l;
+    }
+    function text(x,y,str,cls,anchor){
+      var t = document.createElementNS(ns,'text');
+      t.setAttribute('x',x); t.setAttribute('y',y);
+      t.setAttribute('class',cls);
+      t.setAttribute('text-anchor', anchor || 'start');
+      t.setAttribute('font-family',"IBM Plex Mono, monospace");
+      t.setAttribute('font-size','9.5');
+      t.setAttribute('fill',cvar('--fg-dim'));
+      t.textContent = str;
+      return t;
+    }
+
+    // gridlines + y ticks (0 kcal/mol reference + ~4 ticks)
+    var ticks = 4;
+    for(var t=0;t<=ticks;t++){
+      var val = lo + (hi-lo)*t/ticks;
+      var y = py(val, lo, hi);
+      svg.appendChild(line(MX, y, CW-14, y, 'grid'));
+      svg.appendChild(text(MX-6, y+3, val.toFixed(0), 'ytick', 'end'));
+    }
+    var gridEls = svg.querySelectorAll('.grid');
+    gridEls.forEach(function(g){ g.setAttribute('stroke',cvar('--line')); g.setAttribute('stroke-width','1'); });
+
+    // zero reference line if within range
+    if(0 >= lo && 0 <= hi){
+      var y0 = py(0, lo, hi);
+      var zl = line(MX, y0, CW-14, y0, 'zero');
+      zl.setAttribute('stroke', cvar('--fg-faint'));
+      zl.setAttribute('stroke-dasharray','2,3');
+      svg.appendChild(zl);
+    }
+
+    // area fill
+    var pathPts = job.rel_energies.map(function(e,i){ return px(i,n) + ',' + py(e,lo,hi); });
+    var areaPts = [MX + ',' + py(lo,lo,hi)].concat(pathPts).concat([px(n-1,n) + ',' + py(lo,lo,hi)]);
+    var area = document.createElementNS(ns,'polygon');
+    area.setAttribute('points', areaPts.join(' '));
+    area.setAttribute('fill', 'url(#grad)');
+    var defs = document.createElementNS(ns,'defs');
+    var grad = document.createElementNS(ns,'linearGradient');
+    grad.setAttribute('id','grad'); grad.setAttribute('x1','0'); grad.setAttribute('y1','0'); grad.setAttribute('x2','0'); grad.setAttribute('y2','1');
+    var s1 = document.createElementNS(ns,'stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color',cvar('--accent')); s1.setAttribute('stop-opacity','0.38');
+    var s2 = document.createElementNS(ns,'stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color',cvar('--accent')); s2.setAttribute('stop-opacity','0.02');
+    grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad);
+    svg.appendChild(defs);
+    svg.appendChild(area);
+
+    // line
+    var poly = document.createElementNS(ns,'polyline');
+    poly.setAttribute('points', pathPts.join(' '));
+    poly.setAttribute('fill','none');
+    poly.setAttribute('stroke',cvar('--accent'));
+    poly.setAttribute('stroke-width','2');
+    poly.setAttribute('stroke-linejoin','round');
+    poly.setAttribute('stroke-linecap','round');
+    svg.appendChild(poly);
+
+    // points (clickable)
+    job.rel_energies.forEach(function(e,i){
+      var cx = px(i,n), cy = py(e,lo,hi);
+      var c = document.createElementNS(ns,'circle');
+      c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r', i===frameIdx ? 5.5 : 3.2);
+      c.setAttribute('fill', i===frameIdx ? cvar('--accent') : (i===job.ts_index ? cvar('--teal') : cvar('--panel2')));
+      c.setAttribute('stroke', i===job.ts_index ? cvar('--teal') : cvar('--accent'));
+      c.setAttribute('stroke-width', '1.6');
+      c.style.cursor = 'pointer';
+      c.addEventListener('click', function(){ setFrame(i); });
+      svg.appendChild(c);
+    });
+
+    // x labels
+    svg.appendChild(text(px(0,n), CH-16, 'neutral', 'xtick'));
+    svg.appendChild(text(px(n-1,n), CH-16, 'ion pair', 'xtick', 'end'));
+    var xl = text((MX+CW-14)/2, CH-4, 'reaction coordinate (frame)', 'axislabel', 'middle');
+    xl.setAttribute('fill',cvar('--fg-faint'));
+    svg.appendChild(xl);
+    var yl = text(12, (MY_T+CH-MY_B)/2, '', 'axislabel');
+    yl.setAttribute('transform', 'rotate(-90 12 ' + ((MY_T+CH-MY_B)/2) + ')');
+    yl.setAttribute('text-anchor','middle');
+    yl.setAttribute('fill',cvar('--fg-faint'));
+    yl.textContent = 'ΔE (kcal/mol)';
+    svg.appendChild(yl);
+  }
+
+  function updateReadout(job, i){
+    document.getElementById('readout').innerHTML =
+      'frame ' + (i+1) + ' / ' + job.rel_energies.length + ' · <b>' + job.rel_energies[i].toFixed(2) + '</b> kcal/mol';
+    document.getElementById('slider').value = i;
+  }
+
+  function setFrame(i, resetCamera){
+    var job = state.current;
+    if(!job) return;
+    i = Math.max(0, Math.min(job.rel_energies.length - 1, i));
+    state.frame = i;
+    renderModel(job, i, !!resetCamera);
+    updateReadout(job, i);
+    drawChart(job, i);
+  }
+
+  function selectJob(rid){
+    var job = state.jobs.find(function(j){ return j.rid === rid; });
+    if(!job) return;
+    state.current = job;
+    try{parent.postMessage({src:'lcc',type:'selected',panel:'pt',rid:job.rid,monomer:job.monomer,amine:job.amine,hsource:job.hsource,dE:job.dE},'*')}catch(e){}
+    document.getElementById('pick').value = rid;
+    markActiveBar(rid);
+    document.getElementById('statBarrier').textContent = job.dE + ' kcal/mol';
+    document.getElementById('statAtoms').textContent = job.natoms;
+    document.getElementById('statFrames').textContent = job.nframes;
+    document.getElementById('statSource').textContent = job.hsource;
+    document.getElementById('slider').max = job.rel_energies.length - 1;
+    stopPlay();
+    setFrame(0, true);
+  }
+
+  function stepPlay(){
+    var job = state.current;
+    var next = state.frame + 1;
+    if(next > job.rel_energies.length - 1){ stopPlay(); return; }
+    setFrame(next);
+  }
+
+  function startPlay(){
+    if(state.playing) return;
+    if(state.frame >= state.current.rel_energies.length - 1) setFrame(0);
+    state.playing = true;
+    document.getElementById('play').textContent = '❚❚';
+    state.timer = setInterval(stepPlay, 550);
+  }
+  function stopPlay(){
+    state.playing = false;
+    document.getElementById('play').textContent = '▶';
+    if(state.timer){ clearInterval(state.timer); state.timer = null; }
+  }
+
+  document.getElementById('play').addEventListener('click', function(){
+    state.playing ? stopPlay() : startPlay();
+  });
+  document.getElementById('slider').addEventListener('input', function(e){
+    stopPlay();
+    setFrame(parseInt(e.target.value, 10));
+  });
+
+
+  var AMF={EA:'Ethylamine',DEA:'Diethylamine',TEA:'Triethylamine',DMA:'Dimethylamine',DMEA:'Dimethylethylamine',DMBA:'Dimethylbutylamine'};
+  window.__ptApi={
+    setAmine:function(code){
+      var full=code?AMF[code]:'';
+      document.querySelectorAll('.barstrip .bwrap').forEach(function(w){
+        var j=state.jobs.find(function(x){return x.rid===w.dataset.rid});
+        w.style.opacity=(!full||(j&&j.amine===full))?1:.2;
+      });
+      document.querySelectorAll('#pick option').forEach(function(o){
+        var j=state.jobs.find(function(x){return x.rid===o.value});
+        var hide=!!(full&&j&&j.amine!==full);o.hidden=hide;o.disabled=hide;
+      });
+      if(full&&state.current&&state.current.amine!==full){
+        var f=state.jobs.find(function(x){return x.amine===full});if(f)selectJob(f.rid);
+      }
+    },
+    focus:function(mon,code){
+      var full=AMF[code];
+      var c=state.jobs.filter(function(j){return j.monomer===mon&&(!full||j.amine===full)});
+      if(!c.length)c=state.jobs.filter(function(j){return j.monomer===mon});
+      if(c.length){window.__ptApi.setAmine(code||'');selectJob(c[0].rid)}
+    },
+    retheme:function(){
+      if(viewer){viewer.setBackgroundColor(cvar('--panel2'));viewer.render();}
+      if(state.current)drawChart(state.current,state.frame);
+    }
+  };
+  fetch('reactions.json').then(function(r){ return r.json(); }).then(function(jobs){
+    state.jobs = jobs;
+    populatePicker(jobs);
+    populateBarstrip(jobs);
+    selectJob(jobs[0].rid);
+  }).catch(function(err){
+    document.getElementById('viewer').textContent = 'Could not load reactions.json: ' + err;
+  });
+})();
+</script>
+
+<style>:root{--bg:#eef1f0;--panel:#ffffff;--panel2:#e6ebe9;--line:#d4d9d6;--fg:#161b22;--fg-dim:#5b6560;--fg-faint:#7a857f;--accent:#2f6f7a;--on-accent:#ffffff;--teal:#b5651d;--teal-dim:#b4d0d3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12181a;--panel:#1a2224;--panel2:#222d30;--line:#2a3436;--fg:#e8ece9;--fg-dim:#93a09b;--fg-faint:#6f7c77;--accent:#6fc7c7;--on-accent:#08181a;--teal:#e0a15a;--teal-dim:#2f565a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12181a;--panel:#1a2224;--panel2:#222d30;--line:#2a3436;--fg:#e8ece9;--fg-dim:#93a09b;--fg-faint:#6f7c77;--accent:#6fc7c7;--on-accent:#08181a;--teal:#e0a15a;--teal-dim:#2f565a;color-scheme:dark}
+body{padding-block:14px 28px;min-height:0}
+body{max-width:1280px;margin-inline:auto;width:100%}
+h1{font-family:'Newsreader',Georgia,serif;font-size:22px;font-weight:600;letter-spacing:-.01em;line-height:1.15}
+.sub{font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--fg-dim);letter-spacing:0;margin-top:2px}
+header{border-bottom:1px solid var(--line);padding-bottom:12px}
+button.playbtn{color:var(--on-accent)}
+.panel,.barstrip{border-radius:10px}
+.panel h2{font-size:11px;letter-spacing:.1em}
+</style>
+<script>
+(function(){
+function __pump(ready,handle){var q=[];window.addEventListener('message',function(e){var m=e.data;if(m&&m.src==='lcc-shell')q.push(m)});
+ var n=0,t=setInterval(function(){if(!ready()){if(++n>200)clearInterval(t);return}while(q.length)handle(q.shift());},120)}
+function __setSel(id,v){var s=document.getElementById(id);if(!s)return;s.value=v;s.dispatchEvent(new Event('change',{bubbles:true}));s.dispatchEvent(new Event('input',{bubbles:true}))}
+function __post(o){o.src='lcc';o.type='selected';try{parent.postMessage(o,'*')}catch(e){}}
+
+function ready(){return !!(window.__ptApi&&document.querySelectorAll('.barstrip .bwrap').length)}
+function handle(m){
+  if(m.type==='theme'){document.documentElement.setAttribute('data-theme',m.theme);window.__ptApi.retheme();}
+  else if(m.type==='amine'){window.__ptApi.setAmine(m.amine||'');}
+  else if(m.type==='focus'){window.__ptApi.focus(m.monomer,m.amine||'');}
+}
+__pump(ready,handle);
+})();
+</script></body></html>

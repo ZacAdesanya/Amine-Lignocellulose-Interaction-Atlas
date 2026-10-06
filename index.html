@@ -1,0 +1,481 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Amine-Lignocellulose Interaction Atlas</title>
+<style>
+/* Layout: one workbench. Header + tabs + shared amine filter on top, a context strip that links the
+   current selection across views, and one full-height pane per view (overview table or an embedded view). */
+:root{
+  --bg:#eef1f0; --surface:#ffffff; --surface2:#e6ebe9; --line:#d4d9d6;
+  --fg:#161b22; --muted:#5b6560; --accent:#2f6f7a; --accent-ink:#0f3b42; --on-accent:#ffffff;
+  --warn:#b5651d; --warn-bg:#f4e6d6;
+  --t1:#2f7d5c; --t2:#b5651d; --t3:#9a4a4a;
+  --serif:"Newsreader",Georgia,serif; --sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12181a; --surface:#1a2224; --surface2:#222d30; --line:#2a3436;
+  --fg:#e8ece9; --muted:#93a09b; --accent:#6fc7c7; --accent-ink:#c9f3ee; --on-accent:#08181a;
+  --warn:#e0a15a; --warn-bg:#3a2d1a; --t1:#6bcf9a; --t2:#e0a15a; --t3:#e08a8a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12181a; --surface:#1a2224; --surface2:#222d30; --line:#2a3436;
+  --fg:#e8ece9; --muted:#93a09b; --accent:#6fc7c7; --accent-ink:#c9f3ee; --on-accent:#08181a;
+  --warn:#e0a15a; --warn-bg:#3a2d1a; --t1:#6bcf9a; --t2:#e0a15a; --t3:#e08a8a; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.45}
+.app{height:100%;min-height:640px;display:flex;flex-direction:column}
+.gut{padding-inline:16px}
+header.top{padding-block:14px 8px;display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline;justify-content:space-between}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(22px,3.4vw,30px);line-height:1.1;letter-spacing:-.01em;margin:2px 0 0;text-wrap:balance}
+.meta{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding-block:6px 10px;border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:4px;overflow-x:auto;max-width:100%;padding-bottom:2px}
+.tab{font:inherit;font-weight:500;background:transparent;color:var(--muted);border:1px solid transparent;border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--fg);border-color:var(--line)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.tab:focus-visible,.chip:focus-visible,.link:focus-visible,td.cell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.amines{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.amines .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}
+.chip{font-family:var(--mono);font-size:12px;font-weight:600;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-ink);color:var(--surface);border-color:var(--accent-ink)}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}}
+.ctx{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding-block:8px;background:var(--surface2);border-bottom:1px solid var(--line);font-size:13px}
+.ctx b{font-weight:600}
+.ctx .from{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.link{font:inherit;font-size:12.5px;background:var(--surface);color:var(--accent-ink);border:1px solid var(--line);border-radius:6px;padding:4px 9px;cursor:pointer}
+:root[data-theme="dark"] .link{color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .link{color:var(--accent)}}
+.link:hover{border-color:var(--accent)}
+.stage{flex:1;min-height:0;position:relative}
+.pane{position:absolute;inset:0}
+.pane iframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+.pane.ov{overflow:auto;padding-block:18px 32px}
+.ovw{max-width:1180px;margin-inline:auto;display:flex;flex-direction:column;gap:22px}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.step h3{font-family:var(--serif);font-size:17px;margin:0;font-weight:600}
+.step p{margin:0;color:var(--muted);font-size:13px}
+.step .go{align-self:flex-start;margin-top:auto}
+.step .k{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+:root[data-theme="dark"] .step .k{color:var(--accent)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:860px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;vertical-align:bottom}
+th.grp{text-align:center;color:var(--fg);border-bottom:1px solid var(--line);font-size:11.5px;letter-spacing:.08em}
+th.grp span{display:block;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px}
+th.row,td.row{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
+td.row b{font-family:var(--mono)}
+td.row span{display:block;font-size:11px;color:var(--muted)}
+td.cell{font-family:var(--mono);font-size:12.5px;cursor:pointer;color:var(--fg)}
+td.cell:hover{outline:2px solid var(--accent);outline-offset:-2px}
+td.cell.na{color:var(--muted);cursor:default}
+td.cell.na:hover{outline:none}
+td.sep,th.sep{border-left:1px solid var(--line)}
+tr.dim td{opacity:.28}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;color:var(--muted);font-size:13px;max-width:92ch}
+.note h3{font-family:var(--serif);font-size:16px;color:var(--fg);margin:0 0 6px}
+.note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.hint{color:var(--muted);font-size:12.5px;margin:0}
+
+.flow{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))!important}
+.netw{max-width:1180px;margin-inline:auto;display:flex;flex-direction:column;gap:14px}
+.nethead{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;justify-content:space-between}
+.nethead h2{font-family:var(--serif);font-size:20px;margin:0;font-weight:600}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);align-items:center}
+.leg i{display:inline-block;width:26px;height:0;border-top:2.5px solid;vertical-align:middle;margin-right:5px}
+.leg i.t1{border-color:var(--t1)} .leg i.t2{border-color:var(--t2)} .leg i.t3{border-color:var(--t3);border-top-style:dashed} .leg i.tn{border-color:var(--muted);border-top-style:dotted}
+.tog{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--fg);cursor:pointer}
+.tog input{accent-color:var(--accent);width:16px;height:16px}
+.graph{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.graph svg{display:block;min-width:900px;width:100%;height:auto}
+svg .colh{font-family:var(--mono);font-size:11px;letter-spacing:.1em;fill:var(--muted);font-weight:600}
+svg .nrect{fill:var(--surface);stroke:var(--line);stroke-width:1.3}
+svg .nrect.inert{stroke-dasharray:4 3}
+svg .nrect.key{fill:color-mix(in srgb,var(--accent) 12%,var(--surface));stroke:var(--accent)}
+svg .nn{font-family:var(--sans);font-size:12.5px;font-weight:600;fill:var(--fg)}
+svg .ns{font-family:var(--sans);font-size:11px;fill:var(--muted)}
+svg .node{cursor:pointer}
+svg .node:hover .nrect,svg .node:focus-visible .nrect,svg .node.sel .nrect{stroke:var(--accent);stroke-width:2}
+svg .node:focus-visible,svg .edge:focus-visible{outline:none}
+svg .plain{fill:none;stroke:var(--line);stroke-width:1.4}
+svg .ep{fill:none;stroke-width:1.8}
+svg .edge{cursor:pointer}
+svg .edge.t1 .ep{stroke:var(--t1)} svg .edge.t2 .ep{stroke:var(--t2)} svg .edge.t3 .ep{stroke:var(--t3);stroke-dasharray:6 4} svg .edge.tn .ep{stroke:var(--muted);stroke-dasharray:2 4;opacity:.6}
+svg .edge:hover .ep,svg .edge.sel .ep,svg .edge:focus-visible .ep{stroke-width:3.4}
+svg .pill{fill:var(--surface);stroke-width:1.4}
+svg .edge.t1 .pill{stroke:var(--t1)} svg .edge.t2 .pill{stroke:var(--t2)} svg .edge.t3 .pill{stroke:var(--t3)} svg .edge.tn .pill{stroke:var(--muted)}
+svg .edge.sel .pill,svg .edge:focus-visible .pill{fill:var(--surface2)}
+svg .pv{font-family:var(--mono);font-size:11px;font-weight:600;fill:var(--fg);text-anchor:middle}
+svg .mk{fill:var(--muted)}
+svg .band{fill:var(--surface2);stroke:var(--line);stroke-width:1.2}
+.det{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.det h3{font-family:var(--serif);font-size:18px;margin:0;font-weight:600}
+.det p{margin:0;color:var(--muted);max-width:90ch}
+.det .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.jt{overflow-x:auto}
+.jt table{min-width:520px}
+.jt td,.jt th{padding:6px 10px}
+.jt td.l,.jt th.l{text-align:left}
+.jt tr.off td{opacity:.35}
+.jt .pv2{color:var(--warn);font-size:11px}
+
+.mx{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.mx h3{font-family:var(--serif);font-size:18px;margin:0;font-weight:600}
+.mx table{min-width:760px}
+.mx td.v{font-family:var(--mono);font-size:12.5px;text-align:center;min-width:56px}
+.mx td.v.lo{font-weight:700;outline:2px solid var(--accent);outline-offset:-2px}
+.mx td.v.t1{background:color-mix(in srgb,var(--t1) 22%,var(--surface))} .mx td.v.t2{background:color-mix(in srgb,var(--t2) 22%,var(--surface))} .mx td.v.t3{background:color-mix(in srgb,var(--t3) 20%,var(--surface))} .mx td.v.nn{color:var(--muted)}
+.mx td.v.ref{font-style:italic}
+.mx th.dma,.mx td.dma{border-left:2px solid var(--accent);border-right:2px solid var(--accent)}
+.mx tr.rowsel td.l{color:var(--accent-ink);font-weight:600}
+.mx td.l{text-align:left;cursor:pointer;white-space:normal;min-width:210px}
+.mx td.l:hover{color:var(--accent)}
+.mx td.l small{display:block;color:var(--muted);font-size:11px}
+.abya{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.ab{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface2);display:flex;flex-direction:column;gap:2px}
+.ab b{font-family:var(--mono);font-size:12px}
+.ab .n{font-family:var(--mono);font-size:18px;font-weight:600}
+.ab small{color:var(--muted);font-size:11px}
+.ab.t1 .n{color:var(--t1)} .ab.t2 .n{color:var(--t2)} .ab.t3 .n{color:var(--t3)} .ab.na .n{color:var(--muted)}
+.ab.lo{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="app">
+  <header class="top gut">
+    <div>
+      <div class="eyebrow">Amines · Lignocellulose · DFT and xTB</div>
+      <h1>Amine-Lignocellulose Interaction Atlas</h1>
+    </div>
+    <div class="meta" id="counts"></div>
+  </header>
+  <div class="bar gut">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="amines" id="amines" role="group" aria-label="Amine filter shared by all views"></div>
+  </div>
+  <div class="ctx gut" id="ctx" hidden></div>
+  <div class="stage" id="stage">
+    <div class="pane ov gut" id="pane-ov"></div>
+    <div class="pane ov gut" id="pane-net" hidden></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var AMINES=["EA","DEA","TEA","DMA","DMEA","DMBA"];
+var AMCLASS={EA:"primary",DEA:"secondary",DMA:"secondary",TEA:"tertiary",DMEA:"tertiary",DMBA:"tertiary"};
+var AMFULL={EA:"Ethylamine",DEA:"Diethylamine",TEA:"Triethylamine",DMA:"Dimethylamine",DMEA:"Dimethylethylamine",DMBA:"Dimethylbutylamine"};
+var ATLAS_AM={"Ethylamine":"EA","Diethylamine":"DEA","Triethylamine":"TEA","Dimethylamine":"DMA","DME":"DMEA","DMB":"DMBA"};
+var PT_AM={"Ethylamine":"EA","Diethylamine":"DEA","Triethylamine":"TEA","Dimethylamine":"DMA","Dimethylethylamine":"DMEA","Dimethylbutylamine":"DMBA"};
+var A2P={"Guaiacyl (coniferyl alcohol)":"Guaiacyl","H-unit (p-coumaryl alcohol)":"Hydroxyphenyl","Syringyl (sinapyl alcohol)":"SinapylAlcohol","Cinnamyl alcohol":"CinnamylAlcohol","Ferulic acid":"FerulicAcid","Glucuronic acid":"GlucuronicAcid"};
+var P2A={};Object.keys(A2P).forEach(function(k){P2A[A2P[k]]=k});
+var A2N={"Ferulic acid":["FerulateEster"],"p-Coumarate (methyl ester)":["FerulateEster"],"Glucuronic acid":["gammaEster","Enuronate"],"Xylose":["XyloseOpen"],"Guaiacyl (coniferyl alcohol)":["Coniferaldehyde","betaO4"]};
+var N2A={FerulateEster:"Ferulic acid",gammaEster:"Glucuronic acid",Enuronate:"Glucuronic acid",XyloseOpen:"Xylose",Coniferaldehyde:"Guaiacyl (coniferyl alcohol)",betaO4:"Guaiacyl (coniferyl alcohol)"};
+var P2N={Guaiacyl:["Coniferaldehyde","betaO4"],FerulicAcid:["FerulateEster"],GlucuronicAcid:["gammaEster","Enuronate"]};
+var N2P={FerulateEster:"FerulicAcid",gammaEster:"GlucuronicAcid",Enuronate:"GlucuronicAcid",Coniferaldehyde:"Guaiacyl",betaO4:"Guaiacyl"};
+var STRUCT={FerulateEster:"ferulate ester",gammaEster:"γ-ester",Enuronate:"enuronate ester",XyloseOpen:"open-chain xylose",Coniferaldehyde:"coniferaldehyde",betaO4:"β-O-4 dimer"};
+var PTNAME={Guaiacyl:"guaiacyl",Hydroxyphenyl:"H-unit",SinapylAlcohol:"sinapyl alcohol",CinnamylAlcohol:"cinnamyl alcohol",FerulicAcid:"ferulic acid",GlucuronicAcid:"glucuronic acid"};
+var TABS=[{id:"ov",label:"Overview"},{id:"atlas",label:"Interaction Atlas",src:"atlas.html"},{id:"pt",label:"Proton Transfer",src:"proton.html"},{id:"net",label:"Reaction Network"},{id:"nuc",label:"Nucleophilic Reactions",src:"nucleophilic.html"}];
+var st={tab:"ov",amine:"",sel:{},frames:{},pending:{},ready:{}};
+var $=function(id){return document.getElementById(id)};
+function theme(){var t=document.documentElement.getAttribute("data-theme");if(t==="dark"||t==="light")return t;return matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"}
+function send(tab,msg){msg.src="lcc-shell";var f=st.frames[tab];if(!f)return;if(st.ready[tab]){try{f.contentWindow.postMessage(msg,"*")}catch(e){}}else{(st.pending[tab]=st.pending[tab]||[]).push(msg)}}
+function ensure(tab){
+  if(st.frames[tab])return;var t=TABS.filter(function(x){return x.id===tab})[0];
+  var f=document.createElement("iframe");f.title=t.label;f.id="frame-"+tab;
+  f.addEventListener("load",function(){st.ready[tab]=true;(st.pending[tab]||[]).forEach(function(m){try{f.contentWindow.postMessage(m,"*")}catch(e){}});st.pending[tab]=[]});
+  var p=document.createElement("div");p.className="pane";p.id="pane-"+tab;p.hidden=true;p.appendChild(f);$("stage").appendChild(p);
+  st.frames[tab]=f;f.src=t.src+"#"+theme();
+  if(st.amine)send(tab,{type:"amine",amine:st.amine});
+}
+function show(tab){
+  st.tab=tab;ensure_if(tab);if(tab==="net")drawNet();
+  TABS.forEach(function(t){var b=$("tab-"+t.id);b.setAttribute("aria-selected",String(t.id===tab));var p=$("pane-"+t.id);if(p)p.hidden=(t.id!==tab)});
+  renderCtx();
+}
+function ensure_if(tab){if(tab!=="ov"&&tab!=="net")ensure(tab)}
+function go(tab,msg){show(tab);if(msg)send(tab,msg)}
+/* tabs and amine chips */
+$("tabs").innerHTML=TABS.map(function(t){return '<button class="tab" role="tab" id="tab-'+t.id+'" aria-selected="false">'+t.label+'</button>'}).join("");
+TABS.forEach(function(t){$("tab-"+t.id).addEventListener("click",function(){show(t.id)})});
+function drawChips(){
+  $("amines").innerHTML='<span class="lab">Amine</span><button class="chip" data-a="" aria-pressed="'+(st.amine===""?"true":"false")+'">All</button>'+
+   AMINES.map(function(a){return '<button class="chip" data-a="'+a+'" aria-pressed="'+(st.amine===a?"true":"false")+'" title="'+AMFULL[a]+' ('+AMCLASS[a]+')">'+a+'</button>'}).join("");
+  document.querySelectorAll("#amines .chip").forEach(function(c){c.addEventListener("click",function(){setAmine(c.getAttribute("data-a"))})});
+}
+function setAmine(a){st.amine=a;drawChips();TABS.forEach(function(t){if(t.src&&st.frames[t.id])send(t.id,{type:"amine",amine:a})});drawOverview();drawNet();renderCtx()}
+/* context strip */
+function amC(code){return AMINES.indexOf(code)>=0?code:(st.amine||"")}
+function renderCtx(){
+  var c=$("ctx"),s=st.sel[st.tab];
+  if(st.tab==="ov"||st.tab==="net"||!s){c.hidden=true;return}
+  var h="",links=[];var a=amC(s.amine);
+  if(st.tab==="atlas"){
+    h='<span class="from">Atlas</span><span><b>'+s.substrate+' + '+s.amine+'</b>'+(s.dock?' · docking ΔE '+s.dock:'')+(s.led?' · CCSD(T) ΔE '+s.led:'')+'</span>';
+    var pm=A2P[s.substrate];if(pm)links.push(['Proton transfer for '+PTNAME[pm]+' + '+a,function(){go("pt",{type:"focus",monomer:pm,amine:a})}]);
+    var ns=A2N[s.substrate];if(ns)links.push(['Reactions of the '+STRUCT[ns[0]]+' model',function(){go("nuc",{type:"filter",structure:ns[0],amine:a,pick:true})}]);
+  }else if(st.tab==="pt"){
+    h='<span class="from">Proton transfer</span><span><b>'+(PTNAME[s.monomer]||s.monomer)+' + '+s.amine+'</b> · '+s.hsource+' O–H · ΔE '+s.dE+' kcal/mol</span>';
+    var as=P2A[s.monomer];if(as)links.push(['Non-covalent interactions',function(){go("atlas",{type:"select",substrate:as,amine:a})}]);
+    var pn=P2N[s.monomer];if(pn)links.push(['Reactions of the '+STRUCT[pn[0]]+' model',function(){go("nuc",{type:"filter",structure:pn[0],amine:a,pick:true})}]);
+  }else if(st.tab==="nuc"){
+    h='<span class="from">Reaction</span><span><b>'+(STRUCT[s.structure]||s.structure)+' + '+s.amine+'</b> · '+s.reaction+(s.bar!=null?' · highest image '+s.bar.toFixed(1)+' kcal/mol':'')+'</span>';
+    var an=N2A[s.structure];if(an)links.push(['Non-covalent interactions',function(){go("atlas",{type:"select",substrate:an,amine:a})}]);
+    var pp=N2P[s.structure];if(pp&&a)links.push(['Proton transfer for '+PTNAME[pp]+' + '+a,function(){go("pt",{type:"focus",monomer:pp,amine:a})}]);
+  }
+  c.innerHTML=h;links.forEach(function(l){var b=document.createElement("button");b.className="link";b.textContent=l[0]+" →";b.addEventListener("click",l[1]);c.appendChild(b)});
+  c.hidden=false;
+}
+window.addEventListener("message",function(e){
+  var m=e.data;if(!m||m.src!=="lcc"||m.type!=="selected")return;
+  if(m.panel==="atlas")st.sel.atlas={substrate:m.substrate,amine:ATLAS_AM[m.amine]||m.amine,dock:m.dock,led:m.led};
+  if(m.panel==="pt")st.sel.pt={monomer:m.monomer,amine:PT_AM[m.amine]||m.amine,hsource:m.hsource,dE:m.dE};
+  if(m.panel==="nuc")st.sel.nuc={structure:m.structure,amine:m.amine,reaction:m.reaction,bar:m.bar};
+  if(m.panel===st.tab)renderCtx();
+});
+/* theme sync */
+function syncTheme(){var t=theme();TABS.forEach(function(x){if(x.src&&st.frames[x.id])send(x.id,{type:"theme",theme:t})})}
+new MutationObserver(syncTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",syncTheme);
+/* overview */
+var OV=null;
+var NUCCOLS=[["Aminolysis","Aminolysis"],["Hydrolysis","Hydrolysis"],["E1cB","E1cB"],["CarbinolamineAddition","Carbinolamine"],["QMtrapping","QM trapping"],["Epoxide","Epoxide"]];
+var PTCOLS=[["Carboxylic","COOH"],["Phenolic","Phenolic OH"],["Aliphatic","Aliphatic OH"]];
+function fmt(v){return v==null?"–":(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(1)}
+function drawOverview(){
+  var p=$("pane-ov");if(!OV){p.innerHTML='<p class="hint">Loading summary…</p>';return}
+  var cols=[];
+  cols.push({g:"Non-covalent interactions",gs:"mean over substrates, kcal/mol",c:[{k:"dock",l:"Docking ΔE",get:function(a){return OV.atlas[a].dock},tab:"atlas",good:-1},{k:"led",l:"CCSD(T) ΔE",get:function(a){return OV.atlas[a].led},tab:"atlas",good:-1}]});
+  cols.push({g:"Proton transfer",gs:"median ion pair − neutral, by O–H source",c:PTCOLS.map(function(x){return {k:x[0],l:x[1],get:function(a){var o=OV.pt[a][x[0]];return o?o.v:null},n:function(a){var o=OV.pt[a][x[0]];return o?o.n:0},tab:"pt",good:1}})});
+  cols.push({g:"Bond-forming steps",gs:"median highest image above reactant",c:NUCCOLS.map(function(x){return {k:x[0],l:x[1],get:function(a){var o=OV.nuc[a][x[0]];return o?o.v:null},n:function(a){var o=OV.nuc[a][x[0]];return o?o.n:0},tab:"nuc",rx:x[0],good:1}})});
+  var flat=[];cols.forEach(function(g,gi){g.c.forEach(function(c,ci){c.first=ci===0&&gi>0;flat.push(c)})});
+  flat.forEach(function(c){var vs=AMINES.map(c.get).filter(function(v){return v!=null});c.lo=Math.min.apply(null,vs);c.hi=Math.max.apply(null,vs)});
+  var h='<div class="tbl"><table><thead><tr><th class="row"></th>'+cols.map(function(g,i){return '<th class="grp'+(i?" sep":"")+'" colspan="'+g.c.length+'">'+g.g+'<span>'+g.gs+'</span></th>'}).join("")+'</tr><tr><th class="row">Amine</th>'+
+    flat.map(function(c){return '<th'+(c.first?' class="sep"':"")+'>'+c.l+'</th>'}).join("")+'</tr></thead><tbody>';
+  AMINES.forEach(function(a){
+    h+='<tr class="'+(st.amine&&st.amine!==a?"dim":"")+'"><td class="row"><b>'+a+'</b><span>'+AMCLASS[a]+'</span></td>';
+    flat.forEach(function(c){
+      var v=c.get(a),cls="cell"+(c.first?" sep":"");
+      if(v==null){h+='<td class="'+cls+' na">–</td>';return}
+      var t=c.hi===c.lo?.5:(v-c.lo)/(c.hi-c.lo);var strength=c.good<0?1-t:1-t;/* lower value = stronger in every column */
+      var pct=Math.round(10+strength*38);
+      var n=c.n?c.n(a):0;
+      h+='<td tabindex="0" class="'+cls+'" data-a="'+a+'" data-tab="'+c.tab+'" data-rx="'+(c.rx||"")+'" data-k="'+c.k+'" style="background:color-mix(in srgb,var(--accent) '+pct+'%,var(--surface))" title="'+(n?n+' job'+(n>1?"s":"")+' · ':'')+'open in '+(c.tab==="atlas"?"Interaction Atlas":c.tab==="pt"?"Proton Transfer":"Nucleophilic Reactions")+'">'+fmt(v)+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  var nled=0;AMINES.forEach(function(a){nled+=OV.atlas[a].nled});
+  p.innerHTML='<div class="ovw">'+
+   '<div class="flow"><div class="step"><span class="k">1 · Non-covalent</span><h3>How the amine associates</h3><p>Lowest-energy docked complexes of six amines on lignocellulose monomers, with DLPNO-CCSD(T) energy decomposition where available.</p><button class="link go" data-go="atlas">Open Interaction Atlas →</button></div>'+
+   '<div class="step"><span class="k">2 · Proton transfer</span><h3>Whether it takes the proton</h3><p>Minimum-energy paths for moving an O–H proton to the amine, split by phenolic, aliphatic and carboxylic sources.</p><button class="link go" data-go="pt">Open Proton Transfer →</button></div>'+
+   '<div class="step"><span class="k">3 · Network</span><h3>Which routes are open</h3><p>Seven linkages, their key steps, products and follow-on chemistry, with the computed barrier on every route.</p><button class="link go" data-go="net">Open Reaction Network →</button></div>'+
+   '<div class="step"><span class="k">4 · Paths</span><h3>How each step runs</h3><p>NEB paths for aminolysis, hydrolysis, elimination, quinone methide chemistry and other nucleophilic steps in water at 373 K.</p><button class="link go" data-go="nuc">Open Nucleophilic Reactions →</button></div></div>'+
+   '<div><p class="hint" style="margin-bottom:8px">Each cell summarises one amine across a view. Darker means a stronger interaction, easier proton transfer or a lower barrier within its column. Select a cell to open that view with the amine (and reaction) already applied.</p>'+h+'</div>'+
+   '<div class="note"><h3>Reading across the three views</h3><ul>'+
+   '<li>Non-covalent interaction energies come from DFT-level docking, with DLPNO-CCSD(T) single points on '+nled+' of the complexes. Proton transfer and reaction paths are GFN2-xTB. Compare trends within a column, not absolute numbers between column groups.</li>'+
+   '<li>Reaction barriers are the highest NEB image above the reactant, so they are upper bounds on the saddle point. Provisional jobs (barrier under about 10 kcal/mol or an irregular profile) are left out of the medians. Aminolysis has no tertiary-amine entries because tertiary amines cannot form the amide.</li>'+
+   '<li>ALPB water runs at 298.15 K; 373.15 K enters only through the frequency step, so barriers are electronic, not free energies.</li>'+
+   '<li>Proton-transfer ΔE is the ion pair relative to the neutral H-bonded complex, so it measures how favourable the transfer is, not a barrier.</li></ul></div></div>';
+  p.querySelectorAll("[data-go]").forEach(function(b){b.addEventListener("click",function(){var t=b.getAttribute("data-go");go(t,st.amine?{type:"amine",amine:st.amine}:null)})});
+  p.querySelectorAll("td.cell[data-a]").forEach(function(td){
+    var act=function(){var a=td.getAttribute("data-a"),t=td.getAttribute("data-tab"),rx=td.getAttribute("data-rx");
+      st.amine=a;drawChips();TABS.forEach(function(x){if(x.src&&st.frames[x.id])send(x.id,{type:"amine",amine:a})});
+      if(t==="nuc")go("nuc",{type:"filter",structure:"",reaction:rx,amine:a,pick:true});else go(t,{type:"amine",amine:a});
+      drawOverview()};
+    td.addEventListener("click",act);td.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();act()}});
+  });
+}
+/* ---------- reaction network ---------- */
+var NET=null,netEdge="fer-acyl",netNode=null,netAnions=false;
+var NA=[
+ {id:"fer",n:"Ferulate ester",s:"feruloyl ester (LCC)",f:"C16H20O9",st:"FerulateEster",w:"3-O-feruloyl glucopyranose, a hydroxycinnamate ester."},
+ {id:"gam",n:"γ-Glucuronoyl ester",s:"uronate ester at γ-OH",f:"C16H20O9",st:"gammaEster",w:"Coniferyl γ-glucuronate. The model has no β-OH, so acyl migration is not covered."},
+ {id:"gly",n:"Phenyl glycoside",s:"aryl β-glucoside",f:"C13H18O7",st:"phenylGlycoside",w:"Guaiacyl β-D-glucoside. Anhydro formation needs a 1,2-trans OH, and the relaxed model is β."},
+ {id:"ben",n:"Benzyl ethers C2, C6",s:"sugar-O-Cα ethers",f:"C16H24O10",st:"BenzylEtherC6",w:"Lignin Cα–O–sugar ethers. The C2 file has the ether on glucose O-3, not O-2."},
+ {id:"b4",n:"β-O-4, phenolic",s:"free phenol, Cα-OH",f:"C19H24O6",st:"betaO4",w:"Phenolic β-O-4 dimer with α-OH and γ-OH."},
+ {id:"a4",n:"α-O-4, non-phenolic",s:"Cα aryl ether, Cβ-OH",f:"C19H24O5",st:"alphaO4",w:"Non-phenolic α-O-4 dimer with β-OH and γ-OH. No QM route because both ring oxygens are etherified."},
+ {id:"a45",n:"4-O-5",s:"diaryl ether, inert",f:"C16H18O5",st:"4O5",inert:1,w:"Diaryl ether, run only as an SNAr negative control."}];
+var NB=[
+ {id:"acyl",n:"Acyl substitution",s:"hydrolysis, aminolysis"},
+ {id:"aza",n:"Aza-Michael",s:"amine adds to the cinnamate"},
+ {id:"e1cb",n:"E1cB elimination",s:"amine as base"},
+ {id:"lac",n:"Lactonization",s:"6,3-lactone, no water"},
+ {id:"anh",n:"1,2-Anhydro formation",s:"needs a 1,2-trans OH"},
+ {id:"qm",n:"Quinone methide",s:"phenolate expels the ether",key:1},
+ {id:"ep",n:"Epoxide formation",s:"alkoxide displaces ArO⁻"},
+ {id:"sn2",n:"Direct SN2",s:"benzylic, anomeric, allylic C"},
+ {id:"snar",n:"SNAr",s:"amine attacks the ipso C",inert:1}];
+var NC=[
+ {n:"Acid or amide + alcohol",s:"amide only with EA, DMA, DEA"},
+ {n:"β-Amino ester",s:"enol; keto form not modelled"},
+ {n:"4-Deoxy-enuronate ester",s:"+ water; C5 epimer possible"},
+ {n:"6,3-Lactone",s:"+ coniferyl alcohol"},
+ {n:"1,2-Anhydro sugar",s:"+ guaiacol; opens to glucose"},
+ {n:"Quinone methide",s:"+ sugar-OH or water"},
+ {n:"Epoxide + phenol",s:"+ 4-ethylguaiacol or 4-ethylphenol"},
+ {n:"Substitution product",s:"amine, alcohol or glycosylamine"},
+ {n:"Aryl amine + diphenol",s:"only under forcing conditions",inert:1}];
+var ND=[
+ {id:"carb",row:0,n:"Carbinolamine, imine",s:"released sugars and aldehydes",src:0},
+ {id:"mich",row:2,n:"Michael addition",s:"amine or OH⁻ adds at C4",src:2},
+ {id:"trap",row:5,n:"QM trapping",s:"adducts, recombination",src:5}];
+var NE=[
+ {k:"fer-acyl",a:"fer",b:"acyl",t:"Ferulate ester → acyl substitution",d:"Water gives the acid; EA and DMA can give the amide and DEA is slowed by sterics. Tertiary amines act only as bases. The explicit water in the hydrolysis jobs is placed next to the amine, so those barriers are optimistic."},
+ {k:"fer-aza",a:"fer",b:"aza",t:"Ferulate ester → aza-Michael",d:"Attack at the cinnamate β-carbon is far above acyl attack, so it does not compete."},
+ {k:"gam-acyl",a:"gam",b:"acyl",t:"γ-Ester → acyl substitution",d:"Aminolysis (EA, DMA, DEA), amine-assisted hydrolysis and saponification. Hydrolysis jobs 125–130 are provisional because the explicit water may be pre-bound."},
+ {k:"gam-e1cb",a:"gam",b:"e1cb",t:"γ-Ester → E1cB elimination",d:"The amine removes the α-H and the C4-OH leaves as water. The barrier rises with amine size. Real LCC has a better leaving group at C4, so this model is conservative."},
+ {k:"gam-lac",a:"gam",b:"lac",t:"γ-Ester → lactonization",d:"A sugar OH attacks the ester carbonyl. No amine is involved. RID 203 (alkoxide) is flagged for review."},
+ {k:"gam-sn2",a:"gam",b:"sn2",t:"γ-Ester → SN2 at the allylic carbon",d:"Alkyl-oxygen cleavage with the carboxylate as leaving group. Only water and hydroxide are favourable."},
+ {k:"gly-anh",a:"gly",b:"anh",t:"Phenyl glycoside → 1,2-anhydro sugar",d:"The C2 OH attacks C1 and guaiacolate leaves. Implicit water lowers this by 30–40 kcal/mol compared with the gas phase."},
+ {k:"gly-sn2",a:"gly",b:"sn2",t:"Phenyl glycoside → SN2 at C1",d:"Direct backside attack at the anomeric carbon. Amines do not substitute here; hydroxide does."},
+ {k:"ben-qm",a:"ben",b:"qm",t:"Benzyl ethers → quinone methide",d:"Neutral routes are out of reach. The phenolate version (high pH) is 29–34."},
+ {k:"ben-sn2",a:"ben",b:"sn2",t:"Benzyl ethers → SN2 at Cα",d:"Only hydroxide reaches the 35–43 range. DMA jobs 186 and 190 are probably unconverged."},
+ {k:"b4-qm",a:"b4",b:"qm",t:"β-O-4 → quinone methide",d:"The α-OH leaves from the free phenol. RID 157 (EA) is an upper bound; DMA and DEA give 107 and 108."},
+ {k:"b4-ep",a:"b4",b:"ep",t:"β-O-4 → epoxide",d:"Almost independent of the amine. The alkoxide route is 51.2."},
+ {k:"a4-ep",a:"a4",b:"ep",t:"α-O-4 → epoxide",d:"The neutral series is inconsistent (38.6 to 130.7), so read it with care. The alkoxide route is 40.3."},
+ {k:"a4-sn2",a:"a4",b:"sn2",t:"α-O-4 → SN2 at Cα",d:"Hydroxide gives 48.8; amines and water are higher."},
+ {k:"a45-snar",a:"a45",b:"snar",t:"4-O-5 → SNAr",d:"Negative control. EA and DMA (169, 170) are provisional, and DEA is 55.6."},
+ {k:"enu-mich",a:null,src:"c2",dst:"mich",t:"4-Deoxy-enuronate → Michael addition",d:"Amines and hydroxide add at C4 with little or no barrier. Rank these by ΔE, not by barrier.",nolab:0},
+ {k:"qm-trap",a:null,src:"c5",dst:"trap",t:"Quinone methide → trapping",d:"Tertiary amines, hydroxide, acetate and methoxide add with essentially no barrier, and tertiary adducts revert. Primary and secondary amines and water are 69–95 because the N–H or O–H proton must move.",nolab:0},
+ {k:"carb",a:null,src:"c0",dst:"carb",t:"Released sugars and aldehydes → carbinolamine, imine",d:"Carbinolamine addition is 13–17 and reversible. The value on the arrow is the dehydration to imine or enamine (41–52). N-glycoside ring closure (45.2) follows the xylose imine.",seq:1}];
+var TIER=function(v){return v==null?"tn":v<=35?"t1":v<=60?"t2":"t3"};
+function nucLabel(j){var m={H2O:"H₂O",OH:"OH⁻",AcO:"AcO⁻",MeO:"MeO⁻",GuaC:"guaiacolate C",NoAmine:"none"};return m[j.am]||j.am}
+function jobOK(j){
+  if(j.cls==="anion"&&!netAnions)return false;
+  if(!st.amine)return true;
+  if(j.cls==="amine")return j.am===st.amine;
+  if(j.cls==="anion"&&AMINES.indexOf(j.am)>=0)return j.am===st.amine;
+  return true;
+}
+function edgeJobs(k){return NET.jobs.filter(function(j){return j.e===k})}
+function edgeVal(e,filt){
+  var js=edgeJobs(e.k).filter(filt||jobOK);if(!js.length)return null;
+  var pick=function(a){return a.reduce(function(m,j){return j.bar<m.bar?j:m})};
+  if(e.seq){
+    var g1=js.filter(function(j){return j.rx==="CarbinolamineAddition"}),g2=js.filter(function(j){return j.rx==="ImineFormation"||j.rx==="EnamineFormation"});
+    var use=g2.length?g2:g1;var best=pick(use);
+    if(g1.length&&g2.length){var b1=pick(g1);if(b1.bar>best.bar)best=b1}
+    return {v:best.bar,j:best};
+  }
+  var b=pick(js);return {v:b.bar,j:b};
+}
+var NG={x:[16,396,650,904],w:[164,184,184,190],top:96,dy:60,h:46};
+function ry(i){return NG.top+i*NG.dy}
+function ayFor(i){return ry(0)+(8*NG.dy)*(i/(NA.length-1))}
+function bez(x1,y1,x2,y2,t){var dx=(x2-x1)*.5,c1x=x1+dx,c2x=x2-dx,u=1-t;return {x:u*u*u*x1+3*u*u*t*c1x+3*u*t*t*c2x+t*t*t*x2,y:u*u*u*y1+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y2,d:"M"+x1+" "+y1+"C"+c1x+" "+y1+" "+c2x+" "+y2+" "+x2+" "+y2}}
+function nodeSvg(kind,i,x,y,w,o,extra){
+  return '<g class="node'+(netNode===kind+i?" sel":"")+'" data-n="'+kind+i+'" tabindex="0" role="button" aria-label="'+o.n+'"><rect class="nrect'+(o.inert?" inert":"")+(o.key?" key":"")+'" x="'+x+'" y="'+(y-NG.h/2)+'" width="'+w+'" height="'+NG.h+'" rx="8"/><text class="nn" x="'+(x+10)+'" y="'+(y-3)+'">'+o.n+'</text><text class="ns" x="'+(x+10)+'" y="'+(y+13)+'">'+o.s+'</text></g>';
+}
+function drawNet(){
+  var p=$("pane-net");if(!NET){p.innerHTML='<p class="hint">Loading network…</p>';return}
+  var W=1110,H=ry(8)+150,g='';
+  g+='<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="mk" d="M0 0L10 5L0 10z"/></marker></defs>';
+  ["LINKAGE","KEY STEP","PRIMARY PRODUCTS","FOLLOW-ON STEP"].forEach(function(t,i){g+='<text class="colh" x="'+NG.x[i]+'" y="70">'+t+'</text>'});
+  var ay={},by={};NA.forEach(function(a,i){ay[a.id]=ayFor(i)});NB.forEach(function(b,i){by[b.id]=ry(i)});
+  /* plain connectors B -> C */
+  NB.forEach(function(b,i){var y=ry(i);g+='<path class="plain" d="M'+(NG.x[1]+NG.w[1])+' '+y+'H'+NG.x[2]+'" marker-end="url(#ar)"'+(b.inert?' stroke-dasharray="4 3"':'')+'/>'});
+  var placed=[];
+  NE.forEach(function(e){
+    var x1,y1,x2,y2;
+    if(e.a){x1=NG.x[0]+NG.w[0];y1=ay[e.a];x2=NG.x[1];y2=by[e.b]}
+    else{var si=+e.src.slice(1);x1=NG.x[2]+NG.w[2];y1=ry(si);var di=ND.filter(function(d){return d.id===e.dst})[0];x2=NG.x[3];y2=ry(di.row)}
+    var ev=edgeVal(e),tier=TIER(ev&&ev.v);
+    var txt=ev?ev.v.toFixed(1)+(ev.j.prov?"†":""):"–";
+    var wpx=txt.length*7+12,pt=null,cand=e.a?[.5,.42,.58,.34,.66,.26,.74,.18,.82,.12,.88,.08,.92]:[.5];
+    for(var ci=0;ci<cand.length&&!pt;ci++){
+      var q=bez(x1,y1,x2,y2,cand[ci]);
+      var hit=placed.some(function(r){return Math.abs(r.x-q.x)<(r.w+wpx)/2+6&&Math.abs(r.y-q.y)<24})||(e.a&&(q.x-wpx/2<x1+6||q.x+wpx/2>x2-6));
+      if(!hit||ci===cand.length-1){pt=q}
+    }
+    placed.push({x:pt.x,y:pt.y,w:wpx});
+    var one='<g class="edge '+tier+(netEdge===e.k?" sel":"")+'" data-e="'+e.k+'" tabindex="0" role="button" aria-label="'+e.t+', '+(ev?ev.v.toFixed(1)+' kcal/mol':'no path for this filter')+'"><path class="ep" d="'+pt.d+'"'+(e.a?'':' marker-end="url(#ar)"')+'/><path d="'+pt.d+'" fill="none" stroke="transparent" stroke-width="16"/><rect class="pill" x="'+(pt.x-wpx/2)+'" y="'+(pt.y-9)+'" width="'+wpx+'" height="18" rx="9"/><text class="pv" x="'+pt.x+'" y="'+(pt.y+4)+'">'+txt+'</text></g>';
+    g+=one;
+  });
+  NA.forEach(function(a,i){g+=nodeSvg("a",i,NG.x[0],ay[a.id],NG.w[0],a)});
+  NB.forEach(function(b,i){g+=nodeSvg("b",i,NG.x[1],ry(i),NG.w[1],b)});
+  NC.forEach(function(c,i){g+=nodeSvg("c",i,NG.x[2],ry(i),NG.w[2],c)});
+  ND.forEach(function(d,i){g+=nodeSvg("d",i,NG.x[3],ry(d.row),NG.w[3],d)});
+  var by0=ry(8)+52;
+  g+='<rect class="band" x="16" y="'+by0+'" width="1078" height="62" rx="8"/><text class="nn" x="30" y="'+(by0+22)+'">Follow-on chemistry, not run as NEB jobs</text><text class="ns" x="30" y="'+(by0+42)+'">Glycosylamine and Amadori rearrangement, LdB–vE isomerization, retro-aldol, saccharinic acids, formaldehyde aminals and Mannich products, carbamate.</text>';
+  var sel=NE.filter(function(e){return e.k===netEdge})[0];
+  var html='<div class="netw"><div class="nethead"><h2>Reaction network at 100 °C in implicit water</h2>'+
+   '<label class="tog" for="tog-an"><input type="checkbox" id="tog-an"'+(netAnions?' checked':'')+'> Include hydroxide, alkoxide and phenolate routes (high pH)</label></div>'+
+   '<div class="leg"><span><i class="t1"></i>35 or lower</span><span><i class="t2"></i>35–60</span><span><i class="t3"></i>above 60</span><span><i class="tn"></i>no path for this filter</span><span>Numbers on the arrows are the lowest barrier on the route (or for the amine chosen above), kcal/mol; the table under the diagram lists every amine. † provisional. Select a route or a box for details.</span></div>'+
+   '<div class="graph"><svg viewBox="0 0 '+W+' '+H+'" role="group" aria-label="Reaction network">'+g+'</svg></div><div id="netdet"></div>'+matrixHtml()+'</div>';
+  p.innerHTML=html;
+  $("tog-an").addEventListener("change",function(e){netAnions=e.target.checked;drawNet()});
+  p.querySelectorAll(".edge").forEach(function(el){var act=function(){netEdge=el.getAttribute("data-e");netNode=null;drawNet()};el.addEventListener("click",act);el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();act()}})});
+  p.querySelectorAll(".node").forEach(function(el){var act=function(){netNode=el.getAttribute("data-n");drawNet()};el.addEventListener("click",act);el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();act()}})});
+  p.querySelectorAll(".mx td.l").forEach(function(el){var act=function(){netEdge=el.getAttribute("data-e");netNode=null;drawNet();var d=$("netdet");if(d&&d.scrollIntoView)d.scrollIntoView({block:"nearest"})};el.addEventListener("click",act);el.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();act()}})});
+  drawNetDetail();
+}
+function drawNetDetail(){
+  var box=$("netdet");if(!box)return;var h="";
+  if(netNode){
+    var kind=netNode.charAt(0),i=+netNode.slice(1);
+    if(kind==="a"){
+      var a=NA[i];h='<div class="det"><h3>'+a.n+'</h3><p><b>'+a.f+'</b> · '+a.w+'</p><div class="row" id="nodelinks"></div></div>';
+      box.innerHTML=h;var r=$("nodelinks"),am=st.amine;
+      var as=N2A[a.st];if(as)addLink(r,"Non-covalent interactions",function(){go("atlas",{type:"select",substrate:as,amine:am})});
+      var pp=N2P[a.st];if(pp&&am)addLink(r,"Proton transfer for "+PTNAME[pp]+" + "+am,function(){go("pt",{type:"focus",monomer:pp,amine:am})});
+      addLink(r,"All paths for this model",function(){go("nuc",{type:"filter",structure:a.st,amine:am,pick:true})});
+      return;
+    }
+    var o=kind==="b"?NB[i]:kind==="c"?NC[i]:ND[i];
+    var ins=NE.filter(function(e){return kind==="b"?e.b===NB[i].id:kind==="d"?e.dst===ND[i].id:false}).map(function(e){return e.k});
+    h='<div class="det"><h3>'+o.n+'</h3><p>'+o.s+'.'+(ins.length?' Select one of the arrows into this box to see the jobs behind it.':'')+'</p></div>';
+    box.innerHTML=h;return;
+  }
+  var e=NE.filter(function(x){return x.k===netEdge})[0],all=edgeJobs(e.k),ev=edgeVal(e);
+  all.sort(function(x,y){return x.bar-y.bar});
+  var rows=all.map(function(j){var ok=jobOK(j);return '<tr class="'+(ok?"":"off")+'"><td class="l">'+j.rid+'</td><td class="l">'+nucLabel(j)+'</td><td class="l">'+j.rx.replace(/([a-z])([A-Z])/g,"$1 $2")+'</td><td>'+j.bar.toFixed(1)+(j.prov?' <span class="pv2">†</span>':'')+'</td><td>'+(j.dE>0?"+":j.dE<0?"−":"")+Math.abs(j.dE).toFixed(1)+'</td><td><button class="link" data-rid="'+j.rid+'">Open path →</button></td></tr>'}).join("");
+  h='<div class="det"><h3>'+e.t+'</h3><p>'+e.d+'</p>'+
+   '<p style="color:var(--fg)">'+(ev?'Lowest barrier for the current filter: <b>'+ev.v.toFixed(1)+' kcal/mol</b> (RID '+ev.j.rid+', '+nucLabel(ev.j)+')'+(ev.j.prov?', provisional':'')+'.':'No path is available for the current filter. Tertiary amines cannot form amides, and anionic routes are hidden unless you include them.')+'</p>'+
+   amineStrip(e)+'<div class="jt tbl"><table><thead><tr><th class="l">RID</th><th class="l">Nucleophile</th><th class="l">Step</th><th>Barrier</th><th>ΔE</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+   '<p class="hint">Dimmed rows are excluded by the amine filter or by the anionic-route switch. Barrier is the highest of ten images above the reactant, kcal/mol.</p></div>';
+  box.innerHTML=h;
+  box.querySelectorAll("button[data-rid]").forEach(function(b){b.addEventListener("click",function(){go("nuc",{type:"rid",rid:+b.getAttribute("data-rid")})})});
+}
+
+function amFilt(a){return function(j){return j.cls==="amine"&&j.am===a}}
+function wFilt(j){return j.cls==="water"||(j.cls==="neutral")}
+function aFilt(j){return j.cls==="anion"}
+function tcls(v){return v==null?"nn":TIER(v)}
+function fv(r){return r?r.v.toFixed(1)+(r.j.prov?"†":""):"–"}
+function amineStrip(e){
+  var vs=AMINES.map(function(a){return edgeVal(e,amFilt(a))});
+  var lo=Math.min.apply(null,vs.map(function(r){return r?r.v:1e9}));
+  return '<div><div class="hint" style="margin-bottom:6px"><b style="color:var(--fg)">Barrier by amine</b> (kcal/mol, lowest route for this arrow; ΔE in grey)</div><div class="abya">'+
+   AMINES.map(function(a,i){var r=vs[i];var cls=r?TIER(r.v):"na";
+    return '<div class="ab '+cls+(r&&r.v===lo?" lo":"")+'"><b>'+a+' <span style="font-weight:400;color:var(--muted)">'+AMCLASS[a]+'</span></b><span class="n">'+fv(r)+'</span><small>'+(r?(r.j.dE>0?"ΔE +":"ΔE −")+Math.abs(r.j.dE).toFixed(1)+" · "+r.j.rx.replace(/([a-z])([A-Z])/g,"$1 $2"):"no path for this amine")+'</small></div>'}).join("")+'</div></div>';
+}
+function matrixHtml(){
+  var h='<div class="mx"><h3>Barrier by amine, every route</h3><p class="hint" style="margin:0">Lowest barrier per route and amine, kcal/mol (highest NEB image above reactant). Outlined cell = lowest amine in the row; DMA is framed. Water and anion columns are the reference routes. † provisional. “–” means no job (tertiary amines cannot aminolyse; not every amine was run on every route). Select a row label to open that route.</p><div class="tbl"><table><thead><tr><th class="l" style="text-align:left">Route</th>'+
+   AMINES.map(function(a){return '<th'+(a==="DMA"?' class="dma"':'')+' style="text-align:center">'+a+'</th>'}).join("")+'<th style="text-align:center">Water</th><th style="text-align:center">Anion</th></tr></thead><tbody>';
+  NE.forEach(function(e){
+    var vs=AMINES.map(function(a){return edgeVal(e,amFilt(a))}),lo=Math.min.apply(null,vs.map(function(r){return r?r.v:1e9}));
+    var w=edgeVal(e,wFilt),an=edgeVal(e,aFilt);
+    h+='<tr class="'+(netEdge===e.k?"rowsel":"")+'"><td class="l" data-e="'+e.k+'" tabindex="0">'+e.t+'</td>'+
+     vs.map(function(r,i){var a=AMINES[i];return '<td class="v '+tcls(r&&r.v)+(r&&r.v===lo?" lo":"")+(a==="DMA"?" dma":"")+'" title="'+a+(r?' · RID '+r.j.rid+' · ΔE '+r.j.dE.toFixed(1):'')+'">'+fv(r)+'</td>'}).join("")+
+     '<td class="v ref '+tcls(w&&w.v)+'">'+fv(w)+'</td><td class="v ref '+tcls(an&&an.v)+'">'+fv(an)+'</td></tr>';
+  });
+  return h+'</tbody></table></div></div>';
+}
+function addLink(row,label,fn){var b=document.createElement("button");b.className="link";b.textContent=label+" →";b.addEventListener("click",fn);row.appendChild(b)}
+fetch("network.json").then(function(r){return r.json()}).then(function(d){NET=d;drawNet()}).catch(function(e){$("pane-net").innerHTML='<p class="hint">Could not load network.json: '+e+'</p>'});
+
+fetch("overview.json").then(function(r){return r.json()}).then(function(d){
+  OV=d;var n=0;AMINES.forEach(function(a){n+=OV.atlas[a].n});
+  $("counts").textContent=n+" complexes · 90 proton-transfer paths · 132 reaction paths";
+  drawOverview();
+}).catch(function(e){$("pane-ov").innerHTML='<p class="hint">Could not load overview.json: '+e+'</p>'});
+drawChips();drawOverview();drawNet();show("ov");
+})();
+</script>
+
+</body></html>

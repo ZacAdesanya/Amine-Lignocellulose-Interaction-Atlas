@@ -1,0 +1,839 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>try{var __t=location.hash.replace('#','');if(__t==='dark'||__t==='light')document.documentElement.setAttribute('data-theme',__t)}catch(e){}</script>
+<title>Amines - Lignocellulose Monomers Interaction Atlas</title>
+<meta charset="utf-8">
+<style>
+  :root{
+    --ink:#161b22;
+    --paper:#eef1f0;
+    --paper-raised:#ffffff;
+    --line:#d4d9d6;
+    --muted:#5b6560;
+    --accent:#2f6f7a;      /* teal - nitrogen/H-bond accent */
+    --accent-ink:#0f3b42;
+    --warn:#b5651d;        /* amber - flags/outliers */
+    --catA:#3a7d5c;
+    --catB:#2f6f7a;
+    --catBp:#1f5f8b;
+    --catC:#7a5c9e;
+    --catD:#8a8f5c;
+    --catE:#b5451d;
+    --catF:#9e6b3a;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e8ece9;
+      --paper:#12181a;
+      --paper-raised:#1a2224;
+      --line:#2a3436;
+      --muted:#93a09b;
+      --accent:#6fc7c7;
+      --accent-ink:#c9f3ee;
+      --warn:#e0a15a;
+      --catA:#6bcf9a;
+      --catB:#6fc7c7;
+      --catBp:#7cb4e8;
+      --catC:#c3a4e8;
+      --catD:#cfd68f;
+      --catE:#f0967a;
+      --catF:#e0b17e;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e8ece9;
+    --paper:#12181a;
+    --paper-raised:#1a2224;
+    --line:#2a3436;
+    --muted:#93a09b;
+    --accent:#6fc7c7;
+    --accent-ink:#c9f3ee;
+    --warn:#e0a15a;
+    --catA:#6bcf9a;
+    --catB:#6fc7c7;
+    --catBp:#7cb4e8;
+    --catC:#c3a4e8;
+    --catD:#cfd68f;
+    --catE:#f0967a;
+    --catF:#e0b17e;
+    color-scheme: dark;
+  }
+
+  * { box-sizing:border-box; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block: max(20px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-bottom));
+    line-height:1.45;
+  }
+  h1,h2,h3{ font-family:"Newsreader", Georgia, serif; font-weight:600; letter-spacing:-0.01em; text-wrap:balance; margin:0; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+
+  .wrap{ max-width:1280px; margin-inline:auto; display:flex; flex-direction:column; gap:22px; }
+
+  header.top{
+    display:flex; flex-direction:column; gap:10px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px;
+  }
+  header.top .eyebrow{
+    font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); font-weight:600;
+  }
+  header.top h1{ font-size:clamp(28px, 4vw, 40px); }
+  header.top p{ margin:0; color:var(--muted); max-width:64ch; font-size:14.5px; }
+
+  .stats-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .stat{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:10px 14px; min-width:112px;
+  }
+  .stat .n{ font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; }
+  .stat .l{ font-size:11px; color:var(--muted); margin-top:4px; }
+
+  .legend{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid var(--line); border-radius:999px; padding:4px 10px 4px 8px;
+    font-size:12px; background:var(--paper-raised); cursor:pointer; user-select:none;
+    transition: opacity .15s, transform .1s;
+  }
+  .chip:hover{ transform:translateY(-1px); }
+  .chip[data-off="1"]{ opacity:.35; }
+  .chip .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .chip b{ font-family:"IBM Plex Mono",monospace; font-weight:600; }
+
+  .layout{ display:grid; grid-template-columns: 1.55fr 1fr; gap:20px; align-items:start; }
+  @media (max-width: 880px){ .layout{ grid-template-columns:1fr; } }
+
+  .panel{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden;
+  }
+
+  .filters{
+    display:flex; gap:8px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line);
+    align-items:center;
+  }
+  .filters select, .filters input{
+    font-family:"IBM Plex Sans", sans-serif; font-size:13px; padding:7px 10px;
+    border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+  }
+  .filters input{ flex:1; min-width:140px; }
+  .view-toggle{ display:flex; gap:4px; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:3px; }
+  .view-toggle button{
+    font-family:"IBM Plex Sans"; font-size:12.5px; padding:5px 11px; border-radius:6px;
+    border:none; background:transparent; color:var(--muted); cursor:pointer;
+  }
+  .view-toggle button.on{ background:var(--accent); color:#08181a; font-weight:600; }
+
+  .grid-scroll{ max-height:70vh; overflow:auto; padding:14px; }
+  .gridview{ display:grid; border-collapse:collapse; width:max-content; min-width:100%; }
+  .gcell{
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    border:1px solid var(--line); font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+    min-width:78px; min-height:44px; padding:4px; cursor:pointer; color:#fff; font-weight:700;
+    position:relative; transition:opacity .15s, transform .1s;
+  }
+  .gcell:hover{ transform:scale(1.04); z-index:2; box-shadow:0 0 0 2px var(--ink) inset; }
+  .gcell.active{ box-shadow:0 0 0 3px var(--accent-ink) inset; }
+  .gcell.empty{
+    background:repeating-linear-gradient(45deg, var(--paper), var(--paper) 6px, var(--line) 6px, var(--line) 7px);
+    color:var(--muted); cursor:default; font-weight:400; font-size:16px;
+  }
+  .gcell.dim{ opacity:.25; }
+  .gcell .dist{ display:block; font-size:9.5px; font-weight:400; opacity:.85; margin-top:1px; }
+  .gcell .nrg{ display:block; font-size:9.5px; font-weight:600; opacity:.95; font-family:"IBM Plex Mono",monospace; }
+  .gcell .led-nrg{
+    display:block; font-size:9.5px; font-weight:700; opacity:1; font-family:"IBM Plex Mono",monospace;
+    border-top:1px dotted rgba(0,0,0,.35); margin-top:1px; padding-top:1px;
+    text-decoration:underline; text-decoration-style:dotted;
+  }
+  .gcell.has-led{ box-shadow:0 0 0 1.5px var(--ink) inset; }
+  .gcell .secrow{ display:block; margin-top:2px; }
+  .sectag{
+    display:inline-block; font-size:8px; font-weight:700; line-height:1; padding:1.5px 3px;
+    border-radius:3px; color:#08181a; margin-right:2px;
+  }
+  td .sectag{ font-size:10px; padding:2px 5px; margin-right:3px; }
+  .gcorner, .growlabel, .gcollabel{
+    background:var(--paper-raised); color:var(--muted); font-family:"IBM Plex Sans"; font-weight:600;
+    font-size:11px; display:flex; align-items:center; padding:6px 8px; border:1px solid var(--line);
+    position:sticky; z-index:1;
+  }
+  .gcorner{ position:sticky; top:0; left:0; z-index:3; }
+  .gcollabel{ top:0; justify-content:center; text-align:center; writing-mode:vertical-rl; transform:rotate(180deg); min-height:64px; }
+  .grid-panel .grid-panel-label{ padding:8px 14px; font-size:11px; color:var(--muted); border-bottom:1px solid var(--line); }
+  .grid-legend-hint{ font-size:11px; color:var(--muted); padding:0 14px 10px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--line); position:sticky; top:0;
+    background:var(--paper-raised); cursor:pointer; white-space:nowrap;
+  }
+  thead th:hover{ color:var(--ink); }
+  tbody tr{ border-bottom:1px solid var(--line); cursor:pointer; }
+  tbody tr:hover{ background:color-mix(in srgb, var(--accent) 8%, transparent); }
+  tbody tr.active{ background:color-mix(in srgb, var(--accent) 16%, transparent); }
+  td{ padding:8px 10px; vertical-align:top; }
+  td.dist{ font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .sub-name{ font-weight:600; }
+  .sub-class{ display:block; font-size:11px; color:var(--muted); }
+  .amine-name{ font-size:12.5px; }
+  .badge{
+    display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700;
+    padding:2px 7px; border-radius:6px; color:#fff;
+  }
+  .flag{ color:var(--warn); font-size:11px; }
+  .table-scroll{ max-height:70vh; overflow:auto; }
+
+  .view-panel{ position:sticky; top:12px; display:flex; flex-direction:column; gap:0; }
+  .view-head{ padding:14px 16px 10px; border-bottom:1px solid var(--line); }
+  .view-head .name{ font-size:16px; font-weight:600; }
+  .view-head .meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+  #viewer{ width:100%; height:360px; background:radial-gradient(circle at 30% 20%, #1c2a2c, #0d1314); position:relative; }
+  :root:not([data-theme="dark"]) #viewer{ background:radial-gradient(circle at 30% 20%, #dfe6e4, #c7d0cd); }
+  .view-foot{ padding:12px 16px 16px; display:flex; flex-direction:column; gap:8px; font-size:12.5px; }
+  .contact-line{
+    display:flex; align-items:center; gap:8px; font-family:"IBM Plex Mono",monospace; font-size:12px;
+    background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:8px 10px;
+  }
+  .contact-line .d{ margin-left:auto; font-weight:700; }
+  .led-decomp{ background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  .led-bar{ display:flex; width:100%; height:8px; border-radius:4px; overflow:hidden; background:var(--line); }
+  .led-seg{ display:inline-block; height:100%; }
+  .led-key{ display:flex; gap:10px; flex-wrap:wrap; font-size:10.5px; color:var(--muted); margin-top:6px; font-family:"IBM Plex Mono",monospace; }
+  .led-key-item{ display:inline-flex; align-items:center; gap:4px; }
+  .led-key-item i{ width:8px; height:8px; border-radius:2px; display:inline-block; }
+  .note-line{ color:var(--warn); font-size:12px; }
+  .atom-legend{ display:flex; gap:10px; flex-wrap:wrap; font-size:11px; color:var(--muted); }
+  .atom-legend span{ display:inline-flex; align-items:center; gap:4px; }
+  .atom-legend i{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .viewctl{ display:flex; gap:6px; }
+  .viewctl button{
+    font-family:"IBM Plex Sans"; font-size:11.5px; padding:5px 9px; border-radius:7px;
+    border:1px solid var(--line); background:var(--paper-raised); color:var(--ink); cursor:pointer;
+  }
+  .viewctl button.on{ background:var(--accent); color:#08181a; border-color:var(--accent); }
+  #status{ font-size:12px; color:var(--muted); padding:14px 16px; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.4.2/3Dmol-min.js"></script>
+
+<div class="wrap">
+
+  <header class="top">
+    <span class="eyebrow">Amine &middot; Lignocellulose &middot; DFT complexes</span>
+    <h1>Non-covalent interactions</h1>
+    <p>Optimized docking conformation showing interactions of 6 amines with monomers of cellulose (glucose), hemicellulose (xylose, arabinose and gluruconic acid) and lignin. The amines are Ethylamine (EA), Diethylamine (DEA), Triethylamine (TEA), Dimethylamine (DMA), Dimethylethylamine (DMEA) and Dimethylbutylamine (DMBA). Each pairing reports the interaction energy (kcal/mol) of the lowest-energy docking conformation found, and, where available, a benchmark DLPNO-CCSD(T)/LED (Local Energy Decomposition) single-point interaction energy computed on that same geometry &mdash; broken down into electrostatics, exchange, dispersion and charge-transfer/induction contributions. Browse the substrate&times;amine grid or the sortable table, then open any cell/row for an interactive 3D view of the actual xyz geometry with the closest amine&ndash;substrate contact highlighted.</p>
+    <div class="stats-row" id="stats"></div>
+  </header>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="filters">
+        <div class="view-toggle">
+          <button id="vt-grid" class="on">Grid</button>
+          <button id="vt-table">Table</button>
+        </div>
+        <select id="f-substrate"></select>
+        <select id="f-amine"></select>
+        <select id="f-category"></select>
+        <input id="f-search" type="text" placeholder="Search substrate or amine&hellip;">
+      </div>
+
+      <div id="grid-wrap" class="grid-panel">
+        <div class="grid-legend-hint">Each cell is one DFT-optimized complex. Shade shows the lowest-conformation docking interaction energy: the darker the teal, the stronger the interaction. The tag is the primary interaction category (A&ndash;F, the closest amine&ndash;substrate contact) with its distance. Where present, the lower value is the DLPNO-CCSD(T) interaction energy on the same geometry (65/72 so far). Small coloured tags mark secondary contacts (carbonyl-O, ether-O, methoxyl-O). Click a cell to load it in the 3D viewer. Hatched = not yet analyzed.
+          <div class="scale"><span id="sc-lo"></span><i class="sbar"></i><span id="sc-hi"></span></div></div>
+        <div class="grid-scroll">
+          <div class="gridview" id="gridview"></div>
+        </div>
+      </div>
+
+      <div class="table-scroll" id="table-wrap" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th data-k="substrate">Substrate</th>
+              <th data-k="amine">Amine</th>
+              <th data-k="category">Category</th>
+              <th data-k="distance">Key distance</th>
+              <th data-k="docking_dE_kcal">Lowest ΔE (kcal/mol)</th>
+              <th data-k="led_dE_kcal">DLPNO-CCSD(T) ΔE (kcal/mol)</th>
+              <th data-k="contact">Contact</th>
+              <th>Secondary contacts</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel view-panel">
+      <div class="view-head">
+        <div class="name" id="v-name">Select a row</div>
+        <div class="meta" id="v-meta">&mdash;</div>
+      </div>
+      <div id="viewer"></div>
+      <div class="view-foot">
+        <div class="viewctl">
+          <button id="ctl-stick" class="on">Stick</button>
+          <button id="ctl-sphere">Ball &amp; stick</button>
+          <button id="ctl-spin">Spin</button>
+        </div>
+        <div class="contact-line" id="v-contact" hidden>
+          <span id="v-contact-text">&mdash;</span>
+          <span class="d" id="v-contact-dist"></span>
+        </div>
+        <div class="contact-line" id="v-energy" hidden>
+          <span>Lowest-conformation interaction energy (docking)</span>
+          <span class="d" id="v-energy-val"></span>
+        </div>
+        <div class="contact-line" id="v-led" hidden>
+          <span id="v-led-label">DLPNO-CCSD(T) interaction energy</span>
+          <span class="d" id="v-led-val"></span>
+        </div>
+        <div class="led-decomp" id="v-led-decomp" hidden></div>
+        <div class="note-line" id="v-note" hidden></div>
+        <div class="note-line" id="v-secondary" hidden></div>
+        <div class="atom-legend">
+          <span><i style="background:#5b6560"></i>C (substrate)</span>
+          <span><i style="background:#2f6f7a"></i>C (amine)</span>
+          <span><i style="background:#c0392b"></i>O</span>
+          <span><i style="background:#2255cc"></i>N</span>
+          <span><i style="background:#dcdcdc"></i>H</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CAT_COLOR = {
+    "A": getVar("--catA"), "B": getVar("--catB"), "B′": getVar("--catBp"),
+    "C": getVar("--catC"), "D": getVar("--catD"), "E": getVar("--catE"), "F": getVar("--catF")
+  };
+  function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888"; }
+
+  // Secondary-contact categories: carbonyl/ether/methoxyl oxygens that are geometrically
+  // present near the amine but never win the closest-contact (primary) classification in
+  // this dataset — tracked as additional tags on top of the primary A–F category.
+  var SEC_FULL = {
+    "G": "Carbonyl-O contact (secondary)",
+    "H": "Ether-O contact (secondary)",
+    "I": "Methoxyl-O contact (secondary)"
+  };
+  var SEC_COLOR = { "G": "#a8763e", "H": "#5d8aa8", "I": "#8a6fae" };
+
+  var CAT_FULL = {
+    "A": "Phenolic OH H-bond",
+    "B": "Aliphatic OH H-bond",
+    "B′": "Anomeric-OH selective H-bond",
+    "C": "N-H···π interaction",
+    "D": "π-CH / dispersion",
+    "E": "COOH interaction",
+    "F": "Weak C-H···N (non-classical)"
+  };
+
+  var DATA = null, XYZ = null, filtered = [], sortKey = "substrate", sortDir = 1, activeIdx = -1;
+  var offCats = {};
+  var viewer = null, spinning = false, sphereMode = false;
+  var viewMode = "grid";
+  var activeCellKey = null;
+
+  var AMINE_ORDER = ["Ethylamine", "Diethylamine", "Triethylamine", "Dimethylamine", "DME", "DMB"];
+  var AMINE_SHORT = {
+    "Ethylamine": "EA", "Diethylamine": "DEA", "Triethylamine": "TEA",
+    "Dimethylamine": "DMA", "DME": "DMEA", "DMB": "DMBA"
+  };
+  var SUBSTRATE_ORDER = [
+    "H-unit (p-coumaryl alcohol)", "Guaiacyl (coniferyl alcohol)", "Syringyl (sinapyl alcohol)",
+    "Ferulic acid", "p-Coumarate (methyl ester)", "Tricin",
+    "Cinnamyl alcohol", "Stilbene",
+    "Arabinose", "Xylose", "Glucose", "Glucuronic acid"
+  ];
+
+  var statusEl = document.createElement("div");
+  statusEl.id = "status"; statusEl.textContent = "Loading library…";
+  document.getElementById("tbody").parentElement.parentElement.prepend(statusEl);
+
+  fetch("./library.json").then(function(r){ return r.json(); }).then(function(d){
+    statusEl.remove();
+    DATA = d.records; XYZ = d.xyz;
+    // flatten for sorting/filtering convenience
+    DATA.forEach(function(r){
+      r.led_dE_kcal = (r.led && typeof r.led.dE_int_kcal === "number") ? r.led.dE_int_kcal : null;
+    });
+    init();
+  }).catch(function(e){
+    statusEl.textContent = "Could not load library.json: " + e;
+  });
+
+  window.__atlas={retheme:function(){
+    CAT_COLOR["A"]=getVar("--catA");CAT_COLOR["B"]=getVar("--catB");CAT_COLOR["B\u2032"]=getVar("--catBp");
+    CAT_COLOR["C"]=getVar("--catC");CAT_COLOR["D"]=getVar("--catD");CAT_COLOR["E"]=getVar("--catE");CAT_COLOR["F"]=getVar("--catF");
+    buildLegend();buildGrid();applyFilters();
+    if(activeIdx>=0&&filtered[activeIdx]){selectRecord(filtered[activeIdx]);}
+  }};
+  function init(){
+    buildStats();
+    buildLegend();
+    buildFilterOptions();
+    buildGrid();
+    attachControls();
+    applyFilters();
+    initViewer();
+    setViewMode("grid");
+  }
+
+  function buildStats(){
+    var byCat = {};
+    DATA.forEach(function(r){ byCat[r.category] = (byCat[r.category]||0)+1; });
+    var subs = new Set(DATA.map(function(r){return r.substrate;}));
+    var amines = new Set(DATA.map(function(r){return r.amine;}));
+    var possible = SUBSTRATE_ORDER.length * AMINE_ORDER.length;
+    var withE = DATA.filter(function(r){ return typeof r.docking_dE_kcal === "number"; });
+    var strongest = withE.slice().sort(function(a,b){ return a.docking_dE_kcal - b.docking_dE_kcal; })[0];
+    var withLED = DATA.filter(function(r){ return r.led && typeof r.led.dE_int_kcal === "number"; });
+    var strongestLED = withLED.slice().sort(function(a,b){ return a.led.dE_int_kcal - b.led.dE_int_kcal; })[0];
+    var stats = [
+      {n: DATA.length + "/" + possible, l:"complexes analyzed"},
+      {n: subs.size, l:"substrates"},
+      {n: amines.size, l:"amines"},
+      {n: byCat["B′"]||0, l:"anomeric-OH cases"},
+      {n: byCat["E"]||0, l:"COOH interactions"},
+      {n: strongest ? strongest.docking_dE_kcal.toFixed(2) : "&mdash;", l: strongest ? "strongest ΔE (" + strongest.substrate + " + " + AMINE_SHORT[strongest.amine] + ")" : "strongest ΔE"},
+      {n: withLED.length + "/" + DATA.length, l:"DLPNO-CCSD(T)/LED-benchmarked"},
+      {n: strongestLED ? strongestLED.led.dE_int_kcal.toFixed(2) : "&mdash;", l: strongestLED ? "strongest CCSD(T) ΔE (" + strongestLED.substrate + " + " + AMINE_SHORT[strongestLED.amine] + ")" : "strongest CCSD(T) ΔE"},
+    ];
+    var el = document.getElementById("stats");
+    el.innerHTML = stats.map(function(s){
+      return '<div class="stat"><div class="n">'+s.n+'</div><div class="l">'+s.l+'</div></div>';
+    }).join("");
+  }
+
+  function recordKey(substrate, amine){ return substrate + "‖" + amine; }
+
+  function buildGrid(){
+    var lookup = {};
+    DATA.forEach(function(r){ lookup[recordKey(r.substrate, r.amine)] = r; });
+
+    var subs = SUBSTRATE_ORDER.filter(function(s){ return DATA.some(function(r){ return r.substrate === s; }); });
+    var amines = AMINE_ORDER.filter(function(a){ return DATA.some(function(r){ return r.amine === a; }); });
+
+    var el = document.getElementById("gridview");
+    var dv = DATA.map(function(r){return r.docking_dE_kcal;}).filter(function(v){return typeof v === "number";});
+    var dlo = Math.min.apply(null, dv), dhi = Math.max.apply(null, dv);
+    var slo = document.getElementById("sc-lo"), shi = document.getElementById("sc-hi");
+    if (slo) slo.textContent = "weaker " + dhi.toFixed(1);
+    if (shi) shi.textContent = dlo.toFixed(1) + " stronger";
+    el.style.gridTemplateColumns = "128px repeat(" + amines.length + ", minmax(94px, 1fr))";
+
+    var html = '<div class="gcorner"></div>';
+    amines.forEach(function(a){
+      html += '<div class="gcollabel" title="' + a + '">' + (AMINE_SHORT[a] || a) + '</div>';
+    });
+    subs.forEach(function(s){
+      html += '<div class="growlabel">' + s + '</div>';
+      amines.forEach(function(a){
+        var r = lookup[recordKey(s, a)];
+        if (!r){
+          html += '<div class="gcell empty" data-empty="1">&ndash;</div>';
+        } else {
+          var col = CAT_COLOR[r.category] || "#888";
+          var shade = (typeof r.docking_dE_kcal === "number" && dhi > dlo)
+            ? Math.round(8 + 44 * (dhi - r.docking_dE_kcal) / (dhi - dlo)) : 8;
+          var nrg = (typeof r.docking_dE_kcal === "number")
+            ? '<span class="nrg"><i>dock</i>' + r.docking_dE_kcal.toFixed(2) + '</span>' : "";
+          var led = (r.led && typeof r.led.dE_int_kcal === "number")
+            ? '<span class="led-nrg" title="DLPNO-CCSD(T)' + (r.led.level === "ccsd_only" ? "-only (triples failed)" : "") + ' interaction energy"><i>CC</i>'
+              + r.led.dE_int_kcal.toFixed(2) + '</span>' : "";
+          var sec = (r.secondary_contacts || []).map(function(s){
+            return '<span class="sectag" style="background:'+SEC_COLOR[s.category]+'" title="'+SEC_FULL[s.category]+' · '+s.distance+'Å">'+s.category+'</span>';
+          }).join("");
+          html += '<div class="gcell' + (led ? ' has-led' : '') + '" data-key="' + recordKey(s, a) + '" style="--shade:' + shade + '%">' +
+            '<span class="c1"><span class="cat" style="background:' + col + '" title="' + (CAT_FULL[r.category] || "") + '">' + r.category + '</span><span class="dist">' + r.distance.toFixed(2) + '&nbsp;&Aring;</span></span>' + nrg + led +
+            (sec ? '<span class="secrow">'+sec+'</span>' : '') + '</div>';
+        }
+      });
+    });
+    el.innerHTML = html;
+
+    el.querySelectorAll(".gcell:not(.empty)").forEach(function(cell){
+      cell.addEventListener("click", function(){
+        var key = cell.getAttribute("data-key");
+        var r = lookup[key];
+        if (!r) return;
+        activeCellKey = key;
+        el.querySelectorAll(".gcell").forEach(function(c){ c.classList.toggle("active", c === cell); });
+        selectRecord(r);
+      });
+    });
+  }
+
+  function refreshGridDimming(){
+    var s = document.getElementById("f-substrate").value;
+    var a = document.getElementById("f-amine").value;
+    var c = document.getElementById("f-category").value;
+    var q = document.getElementById("f-search").value.trim().toLowerCase();
+    var lookup = {};
+    DATA.forEach(function(r){ lookup[recordKey(r.substrate, r.amine)] = r; });
+    document.querySelectorAll("#gridview .gcell:not(.empty)").forEach(function(cell){
+      var r = lookup[cell.getAttribute("data-key")];
+      if (!r) return;
+      var match = true;
+      if (s && r.substrate !== s) match = false;
+      if (a && r.amine !== a) match = false;
+      if (c && r.category !== c) match = false;
+      if (offCats[r.category]) match = false;
+      if (q && !(r.substrate.toLowerCase().indexOf(q) >= 0 || r.amine.toLowerCase().indexOf(q) >= 0)) match = false;
+      cell.classList.toggle("dim", !match);
+    });
+  }
+
+  function setViewMode(mode){
+    viewMode = mode;
+    document.getElementById("vt-grid").classList.toggle("on", mode === "grid");
+    document.getElementById("vt-table").classList.toggle("on", mode === "table");
+    document.getElementById("grid-wrap").hidden = mode !== "grid";
+    document.getElementById("table-wrap").hidden = mode !== "table";
+  }
+
+  function buildLegend(){
+    var cats = Object.keys(CAT_FULL);
+    var el = document.getElementById("legend");
+    el.innerHTML = cats.map(function(c){
+      return '<span class="chip" data-cat="'+c+'"><span class="dot" style="background:'+CAT_COLOR[c]+'"></span><b>'+c+'</b> '+CAT_FULL[c]+'</span>';
+    }).join("");
+    el.querySelectorAll(".chip").forEach(function(chip){
+      chip.addEventListener("click", function(){
+        var c = chip.getAttribute("data-cat");
+        offCats[c] = !offCats[c];
+        chip.setAttribute("data-off", offCats[c] ? "1" : "0");
+        applyFilters();
+      });
+    });
+  }
+
+  function uniqueSorted(key){
+    return Array.from(new Set(DATA.map(function(r){return r[key];}))).sort();
+  }
+
+  function buildFilterOptions(){
+    fillSelect("f-substrate", "All substrates", uniqueSorted("substrate"));
+    fillSelect("f-amine", "All amines", uniqueSorted("amine"));
+    fillSelect("f-category", "All categories", Object.keys(CAT_FULL));
+  }
+  function fillSelect(id, allLabel, items){
+    var sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">'+allLabel+'</option>' +
+      items.map(function(v){ return '<option value="'+v+'">'+v+'</option>'; }).join("");
+  }
+
+  function attachControls(){
+    ["f-substrate","f-amine","f-category"].forEach(function(id){
+      document.getElementById(id).addEventListener("change", applyFilters);
+    });
+    document.getElementById("f-search").addEventListener("input", applyFilters);
+    document.querySelectorAll("thead th[data-k]").forEach(function(th){
+      th.addEventListener("click", function(){
+        var k = th.getAttribute("data-k");
+        if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = 1; }
+        renderTable();
+      });
+    });
+    document.getElementById("ctl-stick").addEventListener("click", function(){ setStyle(false); });
+    document.getElementById("ctl-sphere").addEventListener("click", function(){ setStyle(true); });
+    document.getElementById("ctl-spin").addEventListener("click", function(e){
+      spinning = !spinning;
+      e.target.classList.toggle("on", spinning);
+      if (viewer) viewer.spin(spinning ? "y" : false);
+    });
+    document.getElementById("vt-grid").addEventListener("click", function(){ setViewMode("grid"); });
+    document.getElementById("vt-table").addEventListener("click", function(){ setViewMode("table"); });
+  }
+
+  function setStyle(sphere){
+    sphereMode = sphere;
+    document.getElementById("ctl-stick").classList.toggle("on", !sphere);
+    document.getElementById("ctl-sphere").classList.toggle("on", sphere);
+    if (activeIdx >= 0) renderMolecule(filtered[activeIdx]);
+  }
+
+  function applyFilters(){
+    var s = document.getElementById("f-substrate").value;
+    var a = document.getElementById("f-amine").value;
+    var c = document.getElementById("f-category").value;
+    var q = document.getElementById("f-search").value.trim().toLowerCase();
+    filtered = DATA.filter(function(r){
+      if (s && r.substrate !== s) return false;
+      if (a && r.amine !== a) return false;
+      if (c && r.category !== c) return false;
+      if (offCats[r.category]) return false;
+      if (q && !(r.substrate.toLowerCase().indexOf(q) >= 0 || r.amine.toLowerCase().indexOf(q) >= 0)) return false;
+      return true;
+    });
+    renderTable();
+    refreshGridDimming();
+  }
+
+  function renderTable(){
+    filtered.sort(function(x, y){
+      var xv = x[sortKey], yv = y[sortKey];
+      if (xv == null && yv == null) return 0;
+      if (xv == null) return 1;   // nulls always sort to the end, regardless of direction
+      if (yv == null) return -1;
+      if (typeof xv === "number") return (xv - yv) * sortDir;
+      return String(xv).localeCompare(String(yv)) * sortDir;
+    });
+    var tbody = document.getElementById("tbody");
+    tbody.innerHTML = filtered.map(function(r, i){
+      var col = CAT_COLOR[r.category] || "#888";
+      return '<tr data-i="'+i+'">' +
+        '<td><span class="sub-name">'+r.substrate+'</span><span class="sub-class">'+r.substrate_class+'</span></td>' +
+        '<td class="amine-name">'+r.amine_full+'</td>' +
+        '<td><span class="badge" style="background:'+col+'">'+r.category+'</span></td>' +
+        '<td class="dist">'+r.distance.toFixed(3)+' Å</td>' +
+        '<td class="dist">'+(typeof r.docking_dE_kcal === "number" ? r.docking_dE_kcal.toFixed(2) : "&mdash;")+'</td>' +
+        '<td class="dist">'+(r.led_dE_kcal != null
+          ? r.led_dE_kcal.toFixed(2) + (r.led.level === "ccsd_only" ? ' <span class="flag" title="Perturbative triples step failed; CCSD-only energy, no LED breakdown">&#9888;</span>' : '')
+          : '&mdash;')+'</td>' +
+        '<td>'+r.contact+(r.note ? ' <span class="flag">&#9888;</span>' : '')+'</td>' +
+        '<td>'+(r.secondary_contacts || []).map(function(s){
+          return '<span class="sectag" style="background:'+SEC_COLOR[s.category]+'" title="'+SEC_FULL[s.category]+'">'+s.category+' '+s.distance+'Å</span>';
+        }).join(" ")+'</td>' +
+        '</tr>';
+    }).join("");
+    tbody.querySelectorAll("tr").forEach(function(tr){
+      tr.addEventListener("click", function(){
+        var i = parseInt(tr.getAttribute("data-i"), 10);
+        selectRow(i);
+      });
+    });
+    if (!filtered.length){
+      document.getElementById("v-name").textContent = "No matches";
+      document.getElementById("v-meta").textContent = "Adjust filters to see complexes.";
+    } else if (viewMode === "table" && activeIdx < 0){
+      selectRow(0);
+    }
+  }
+
+  function selectRow(i){
+    activeIdx = i;
+    document.querySelectorAll("#tbody tr").forEach(function(tr){
+      tr.classList.toggle("active", parseInt(tr.getAttribute("data-i"),10) === i);
+    });
+    selectRecord(filtered[i]);
+  }
+
+  function selectRecord(r){
+    activeIdx = filtered.indexOf(r);
+    document.getElementById("v-name").textContent = r.substrate + " + " + r.amine;
+    document.getElementById("v-meta").textContent = r.substrate_class + " · " + r.amine_full + " · " + r.n_atoms + " atoms";
+    var cline = document.getElementById("v-contact");
+    cline.hidden = false;
+    document.getElementById("v-contact-text").textContent = CAT_FULL[r.category] + ": " + r.contact;
+    var distEl = document.getElementById("v-contact-dist");
+    distEl.textContent = r.distance.toFixed(3) + " Å";
+    distEl.style.color = CAT_COLOR[r.category];
+    var eline = document.getElementById("v-energy");
+    if (typeof r.docking_dE_kcal === "number"){
+      eline.hidden = false;
+      document.getElementById("v-energy-val").textContent = r.docking_dE_kcal.toFixed(2) + " kcal/mol";
+    } else {
+      eline.hidden = true;
+    }
+    var lline = document.getElementById("v-led");
+    var ldecomp = document.getElementById("v-led-decomp");
+    if (r.led && typeof r.led.dE_int_kcal === "number"){
+      lline.hidden = false;
+      document.getElementById("v-led-label").textContent = "DLPNO-CCSD(T) interaction energy" + (r.led.level === "ccsd_only" ? " (CCSD-only, triples failed)" : "");
+      document.getElementById("v-led-val").textContent = r.led.dE_int_kcal.toFixed(2) + " kcal/mol";
+      if (r.led.percent){
+        var p = r.led.percent;
+        var bars = [
+          ["Electrostatics", p.electrostatics, "#c0392b"],
+          ["Exchange", p.exchange, "#2255cc"],
+          ["Dispersion", p.dispersion, "#2f6f7a"],
+          ["CT / induction", p.other_corr_CT_induction, "#8a6d3b"]
+        ];
+        ldecomp.hidden = false;
+        ldecomp.innerHTML = '<div class="led-bar">' + bars.map(function(b){
+          var w = Math.max(0, Math.min(100, Math.abs(b[1])));
+          return '<span class="led-seg" style="width:'+w+'%;background:'+b[2]+'" title="'+b[0]+': '+b[1]+'%"></span>';
+        }).join("") + '</div><div class="led-key">' + bars.map(function(b){
+          return '<span class="led-key-item"><i style="background:'+b[2]+'"></i>'+b[0]+' '+b[1].toFixed(0)+'%</span>';
+        }).join(" ") + '</div>';
+      } else {
+        ldecomp.hidden = true;
+        ldecomp.innerHTML = "";
+      }
+    } else {
+      lline.hidden = true;
+      ldecomp.hidden = true;
+      ldecomp.innerHTML = "";
+    }
+    var noteEl = document.getElementById("v-note");
+    if (r.note){ noteEl.hidden = false; noteEl.textContent = "⚠ " + r.note; }
+    else { noteEl.hidden = true; }
+    var secEl = document.getElementById("v-secondary");
+    var secList = r.secondary_contacts || [];
+    if (secList.length){
+      secEl.hidden = false;
+      secEl.innerHTML = "Also within reach: " + secList.map(function(s){
+        return '<span class="sectag" style="background:'+SEC_COLOR[s.category]+'">'+s.category+'</span> '+SEC_FULL[s.category].replace(" (secondary)","")+' ('+s.distance+'Å)';
+      }).join(", ");
+    } else {
+      secEl.hidden = true;
+    }
+    renderMolecule(r);
+  }
+
+  function initViewer(){
+    viewer = $3Dmol.createViewer(document.getElementById("viewer"), {backgroundColor: "0x000000", backgroundAlpha: 0});
+  }
+
+  function renderMolecule(r){
+    if (!viewer) return;
+    viewer.clear();
+    var xyzText = XYZ[r.file];
+    var model = viewer.addModel(xyzText, "xyz");
+
+    var amineN = r.amine_n;
+    model.setStyle({index: [].concat.apply([], Array.from({length: amineN}, function(_, k){return [k];}))}, {}); // no-op reset
+
+    var styleBase = sphereMode ? {stick:{radius:0.13}, sphere:{scale:0.28}} : {stick:{radius:0.16}};
+
+    viewer.setStyle({}, {});
+    viewer.setStyle({serial: rangeSerials(0, amineN-1)}, mergeStyle(styleBase, {colorfunc: amineColor}));
+    viewer.setStyle({serial: rangeSerials(amineN, r.n_atoms-1)}, mergeStyle(styleBase, {colorfunc: substrateColor}));
+
+    var hl = r.highlight;
+    if (hl && hl[0] != null && hl[1] != null){
+      var a1 = model.selectedAtoms({serial: hl[0]})[0];
+      var a2 = model.selectedAtoms({serial: hl[1]})[0];
+      if (a1 && a2){
+        viewer.addCylinder({
+          start:{x:a1.x,y:a1.y,z:a1.z}, end:{x:a2.x,y:a2.y,z:a2.z},
+          radius:0.06, dashed:true, color: CAT_COLOR[r.category] || "yellow"
+        });
+        viewer.addSphere({center:{x:a1.x,y:a1.y,z:a1.z}, radius:0.32, color: CAT_COLOR[r.category]});
+        viewer.addSphere({center:{x:a2.x,y:a2.y,z:a2.z}, radius:0.32, color: CAT_COLOR[r.category]});
+      }
+    }
+
+    viewer.zoomTo();
+    viewer.render();
+    if (spinning) viewer.spin("y");
+  }
+
+  function rangeSerials(a, b){
+    var out = [];
+    for (var i=a;i<=b;i++) out.push(i);
+    return out;
+  }
+  function mergeStyle(base, extra){
+    var out = {};
+    Object.keys(base).forEach(function(k){
+      out[k] = Object.assign({}, base[k], extra);
+    });
+    return out;
+  }
+  function amineColor(atom){
+    if (atom.elem === "N") return "#2255cc";
+    if (atom.elem === "O") return "#c0392b";
+    if (atom.elem === "H") return "#e7d9c9";
+    return "#2f6f7a";
+  }
+  function substrateColor(atom){
+    if (atom.elem === "N") return "#2255cc";
+    if (atom.elem === "O") return "#c0392b";
+    if (atom.elem === "H") return "#dcdcdc";
+    return "#5b6560";
+  }
+})();
+</script>
+
+<style>
+:root{--oncat:#ffffff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--oncat:#08181a}}
+:root[data-theme="dark"]{--oncat:#08181a}
+body{padding-block:14px 28px}
+.wrap{gap:16px}
+header.top{gap:6px;padding-bottom:12px}
+header.top .eyebrow{display:none}
+header.top h1{font-size:22px;line-height:1.15}
+header.top p{font-size:13px;max-width:115ch}
+.stat{padding:8px 12px;min-width:96px}
+.stat .n{font-size:18px}
+.stat .l{font-size:10.5px}
+.stats-row{gap:8px}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.view-panel{position:static}}
+.panel{border-radius:10px}
+.gridview{width:100%;min-width:max-content;grid-auto-rows:auto}
+.gcell{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:4px;text-align:left;
+  min-width:0;min-height:74px;padding:7px 9px;color:var(--ink);font-weight:500;
+  background:color-mix(in srgb,var(--accent) var(--shade,8%),var(--paper-raised));overflow-wrap:anywhere}
+.gcell:hover{transform:none;box-shadow:none;outline:2px solid var(--accent);outline-offset:-2px;z-index:2}
+.gcell.active{box-shadow:none;outline:3px solid var(--accent-ink);outline-offset:-3px}
+.gcell.has-led{box-shadow:none}
+.gcell.empty{align-items:center;justify-content:center;min-height:74px}
+.gcell .c1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gcell .cat{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 4px;border-radius:5px;
+  color:var(--oncat);font-weight:700;font-size:11px;line-height:1}
+.gcell .dist{display:inline;margin:0;font-size:11px;font-weight:500;color:var(--muted);opacity:1}
+.gcell .nrg,.gcell .led-nrg{display:block;border:0;margin:0;padding:0;opacity:1;text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gcell .nrg{font-size:12.5px;font-weight:600}
+.gcell .led-nrg{font-size:12px;font-weight:600;color:var(--accent-ink)}
+:root[data-theme="dark"] .gcell .led-nrg{color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .gcell .led-nrg{color:var(--accent)}}
+.gcell i{font-style:normal;font-size:9.5px;font-weight:500;letter-spacing:.04em;color:var(--muted);margin-right:5px;text-transform:uppercase}
+.gcell .secrow{margin-top:0;display:flex;gap:3px;flex-wrap:wrap}
+.gcell .sectag{margin:0}
+.gcollabel{writing-mode:horizontal-tb;transform:none;min-height:34px;justify-content:center;text-align:center;font-family:"IBM Plex Mono",monospace}
+.growlabel{font-weight:600;font-size:12px;line-height:1.25;overflow-wrap:anywhere}
+.grid-legend-hint{font-size:12px;line-height:1.45;padding:10px 14px 8px;max-width:110ch}
+.scale{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:"IBM Plex Mono",monospace;font-size:11px}
+.scale .sbar{display:block;flex:0 1 220px;height:10px;border-radius:5px;border:1px solid var(--line);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 8%,var(--paper-raised)),color-mix(in srgb,var(--accent) 52%,var(--paper-raised)))}
+</style>
+<script>
+(function(){
+function __pump(ready,handle){var q=[];window.addEventListener('message',function(e){var m=e.data;if(m&&m.src==='lcc-shell')q.push(m)});
+ var n=0,t=setInterval(function(){if(!ready()){if(++n>200)clearInterval(t);return}while(q.length)handle(q.shift());},120)}
+function __setSel(id,v){var s=document.getElementById(id);if(!s)return;s.value=v;s.dispatchEvent(new Event('change',{bubbles:true}));s.dispatchEvent(new Event('input',{bubbles:true}))}
+function __post(o){o.src='lcc';o.type='selected';try{parent.postMessage(o,'*')}catch(e){}}
+
+var AM={EA:'Ethylamine',DEA:'Diethylamine',TEA:'Triethylamine',DMA:'Dimethylamine',DMEA:'DME',DMBA:'DMB'};
+function ready(){return document.querySelectorAll('#gridview .gcell').length>0}
+function pick(sub,am){
+  __setSel('f-search','');
+  var cells=document.querySelectorAll('#gridview .gcell:not(.empty)'),key=sub+'\u2016'+am;
+  for(var i=0;i<cells.length;i++){if(cells[i].getAttribute('data-key')===key){cells[i].click();return}}
+}
+function handle(m){
+  if(m.type==='theme'){document.documentElement.setAttribute('data-theme',m.theme);if(window.__atlas)window.__atlas.retheme();}
+  else if(m.type==='amine'){__setSel('f-amine',m.amine?AM[m.amine]:'');}
+  else if(m.type==='select'){
+    __setSel('f-category','');__setSel('f-substrate','');__setSel('f-amine',m.amine?AM[m.amine]:'');
+    if(m.amine)pick(m.substrate,AM[m.amine]);else __setSel('f-substrate',m.substrate);
+  }
+}
+__pump(ready,handle);
+function report(){
+  var t=document.getElementById('v-name').textContent,i=t.lastIndexOf(' + ');if(i<0)return;
+  var d=document.getElementById('v-energy-val'),l=document.getElementById('v-led-val');
+  __post({panel:'atlas',substrate:t.slice(0,i),amine:t.slice(i+3),dock:d&&!d.parentElement.hidden?d.textContent.replace(' kcal/mol',''):'',led:l&&!l.parentElement.hidden?l.textContent.replace(' kcal/mol',''):''});
+}
+new MutationObserver(function(){setTimeout(report,30)}).observe(document.getElementById('v-name'),{childList:true,characterData:true,subtree:true});
+})();
+</script></body></html>
